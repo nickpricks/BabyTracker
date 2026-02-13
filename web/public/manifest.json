@@ -1,0 +1,21 @@
+{
+  "short_name": "BabyTracker",
+  "name": "Baby Tracker",
+  "description": "Track your baby's feeds, sleep, growth, and diaper changes",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4a90d9",
+  "background_color": "#ffffff"
+}

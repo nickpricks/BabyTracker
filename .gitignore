@@ -1,5 +1,9 @@
 /tmp
 /out-tsc
+.vscode/*
+/.idea/
+.DS_Store
+/.claude/*
 
 /node_modules
 npm-debug.log*
@@ -8,6 +12,23 @@ yarn-error.log*
 /.pnp
 .pnp.js
 
-.vscode/*
-/.idea/
-.DS_Store
+# React web app
+/web/node_modules
+/web/build
+
+# Environment files (keep .env.example)
+.env
+web/.env
+
+# Go build output
+/bin/
+
+# Build & modules
+/web/build/
+/web/node_modules/
+
+# Lock files
+/web/bun.lock
+/web/package-lock.json
+/web/yarn.lock
+/web/pnpm-lock.yaml

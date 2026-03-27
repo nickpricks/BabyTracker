@@ -20,12 +20,15 @@ export default function Sleep() {
   const [recentSleep, setRecentSleep] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [fetchError, setFetchError] = useState("");
+
   const fetchSleep = async () => {
     try {
+      setFetchError("");
       const entries = await getSleep();
       setRecentSleep(entries.slice(-10).reverse());
     } catch {
-      // API may not be running
+      setFetchError("Could not load sleep entries. Is the API server running?");
     }
   };
 
@@ -169,7 +172,9 @@ export default function Sleep() {
       <div style={{ marginTop: 24 }}>
         <h3>Recent Sleep</h3>
         <div style={{ background: "#f8f8f8", padding: 16, borderRadius: 8 }}>
-          {recentSleep.length === 0 ? (
+          {fetchError ? (
+            <p style={{ color: "red" }}>{fetchError}</p>
+          ) : recentSleep.length === 0 ? (
             <p style={{ color: "#666" }}>No sleep entries logged yet.</p>
           ) : (
             <ul style={{ margin: 0, padding: "0 0 0 20px" }}>

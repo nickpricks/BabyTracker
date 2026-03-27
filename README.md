@@ -134,34 +134,32 @@ BabyTracker/
 │   ├── desktop/main.go        # Fyne desktop entry point
 │   └── api/main.go            # HTTP API server entry point
 ├── internal/
-│   ├── models/                # Shared data models
-│   │   ├── feed.go            #   FeedEntry + type constants
-│   │   ├── sleep.go           #   SleepEntry + type/quality constants
-│   │   ├── growth.go          #   GrowthEntry
-│   │   └── diaper.go          #   DiaperEntry + type constants
+│   ├── models/                # Shared data models (feed, sleep, growth, diaper)
 │   ├── storage/               # JSON file persistence (~/.babytracker/)
-│   │   └── storage.go         #   Generic load/save for all entities
-│   ├── api/                   # HTTP handlers & router
-│   │   ├── router.go          #   Gorilla mux routes + CORS
-│   │   ├── handlers.go        #   Feed endpoints
-│   │   ├── sleep_handlers.go  #   Sleep endpoints
-│   │   ├── growth_handlers.go #   Growth endpoints
-│   │   └── diaper_handlers.go #   Diaper endpoints
-│   └── desktop/               # Fyne UI
-│       ├── app.go             #   App lifecycle & window setup
-│       ├── layout.go          #   Tabbed layout
-│       └── tabs/              #   One file per feature tab
-├── web/                       # React SPA
+│   ├── config/                # Environment-based configuration
+│   ├── api/                   # HTTP handlers & gorilla/mux router
+│   └── desktop/               # Fyne UI (app, layout, tabs)
+├── web/                       # React SPA + PWA
 │   ├── public/                #   HTML, manifest, icons
-│   └── src/
-│       ├── components/        #   Feeds, Sleep, Growth, SusuPoty
-│       ├── api.js             #   API client functions
-│       ├── config.js          #   API base URL config
-│       └── ...                #   App, Routes, Main layout
+│   └── src/                   #   Components, API client, routing
+├── docs/                      # 📖 Project documentation
 ├── Makefile                   # Build, run, test commands
-├── Notes.md                   # Detailed architecture notes
 └── go.mod
 ```
+
+---
+
+## 📖 Documentation
+
+Detailed technical documentation lives in the [`docs/`](docs/) folder:
+
+| Document | What's inside |
+|----------|---------------|
+| [**TLDR.md**](docs/TLDR.md) | The entire project in headline form — scan in 60 seconds |
+| [**Manual.md**](docs/Manual.md) | Full technical manual — architecture deep dive, module reference, roadmap |
+| [**man.md**](docs/man.md) | Function & file reference — every file, every function described |
+| [**man-ext.md**](docs/man-ext.md) | Third-party dependency guide — Fyne pain, gorilla/mux gotchas, React/CRA |
+| [**CLAUDE.md**](docs/CLAUDE.md) | Claude Code context — commands, conventions, known gotchas |
 
 ---
 
@@ -187,11 +185,13 @@ BabyTracker/
 - **Web + Mobile**: React SPA calls the Go API server over HTTP
 - **Shared**: All platforms use the same models and storage format
 
+For the full architecture deep dive, see [docs/Manual.md](docs/Manual.md).
+
 ---
 
 ## 🌱 Core Modules
 
-All four modules are fully implemented across desktop, web, and API:
+Four tracking modules, fully implemented across desktop, web, and API:
 
 | Module | What it tracks |
 |--------|---------------|
@@ -200,22 +200,9 @@ All four modules are fully implemented across desktop, web, and API:
 | **Growth** | 📏 Weight (kg), height (cm), head circumference (cm), notes |
 | **Susu-Poty** | 🧷 Type (wet/dirty/mixed), date, time, notes |
 
-### API Endpoints
+Each module exposes REST endpoints: `GET /api/{module}`, `POST /api/{module}`, `GET /api/{module}/{id}`
 
-Each module exposes three endpoints:
-
-| Method | Pattern | Example |
-|--------|---------|---------|
-| `GET` | `/api/{module}` | `GET /api/feeds` — list all |
-| `POST` | `/api/{module}` | `POST /api/sleep` — log new entry |
-| `GET` | `/api/{module}/{id}` | `GET /api/growth/3` — get by ID |
-
-Modules: `feeds`, `sleep`, `growth`, `diapers`
-
-### Data Storage
-
-JSON files in `~/.babytracker/`:
-- `feeds.json`, `sleep.json`, `growth.json`, `diapers.json`
+Data stored as JSON files in `~/.babytracker/` — see [docs/man.md](docs/man.md) for the full API and function reference.
 
 ---
 
@@ -238,20 +225,11 @@ For app store distribution, [Capacitor](https://capacitorjs.com/) can wrap the b
 | `v0.1` | ✅ Done | Initial Fyne window with basic UI |
 | `v0.2` | ✅ Done | Modular architecture, Feed Tracker with persistence |
 | `v0.3` | ✅ Done | All 4 modules complete, standard Go layout, API for all features, React connected to API, PWA, tests |
+| `v0.3.1` | 🔜 Next | Security hardening: API auth, CORS lockdown, storage mutex, file permissions ([details](docs/Security-Review.md)) |
 | `v0.4` | 🔜 Planned | History views with charts, pattern analytics |
 | `v0.5` | 🔜 Planned | Reminders, notifications |
 | `v1.0` | ⏳ Future | Multi-profile support, exportable reports, dark mode |
 | `v2.0+` | 🚀 Vision | Adult Mode: rebranded as Body Soul and Mind Tracker |
-
----
-
-## 📚 Resources
-
-- [Go Tour](https://go.dev/tour/) — Interactive introduction to Go
-- [Fyne Documentation](https://docs.fyne.io/) — GUI framework guide
-- [React Documentation](https://react.dev/) — Web framework
-- [PWA Guide](https://web.dev/progressive-web-apps/) — Progressive Web Apps
-- [Gorilla Mux](https://github.com/gorilla/mux) — HTTP router
 
 ---
 

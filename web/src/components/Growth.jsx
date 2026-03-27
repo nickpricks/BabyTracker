@@ -14,12 +14,15 @@ export default function Growth() {
   const [recentGrowth, setRecentGrowth] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [fetchError, setFetchError] = useState("");
+
   const fetchGrowth = async () => {
     try {
+      setFetchError("");
       const entries = await getGrowth();
       setRecentGrowth(entries.slice(-10).reverse());
     } catch {
-      // API may not be running
+      setFetchError("Could not load growth entries. Is the API server running?");
     }
   };
 
@@ -145,7 +148,9 @@ export default function Growth() {
       <div style={{ marginTop: 24 }}>
         <h3>Recent Measurements</h3>
         <div style={{ background: "#f8f8f8", padding: 16, borderRadius: 8 }}>
-          {recentGrowth.length === 0 ? (
+          {fetchError ? (
+            <p style={{ color: "red" }}>{fetchError}</p>
+          ) : recentGrowth.length === 0 ? (
             <p style={{ color: "#666" }}>No growth entries logged yet.</p>
           ) : (
             <ul style={{ margin: 0, padding: "0 0 0 20px" }}>

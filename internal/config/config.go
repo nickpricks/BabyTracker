@@ -13,13 +13,16 @@ type Config struct {
 	APIPort  string // HTTP port for the API server
 	DataDir  string // Directory for JSON data files
 	AppTitle string // Desktop window title
+	APIKey     string // Shared secret for API authentication (empty = no auth)
+	CORSOrigin string // Allowed CORS origin (default: http://localhost:3000)
 }
 
 // Default values
 const (
-	DefaultAPIPort  = "8080"
-	DefaultDataDir  = ".babytracker"
-	DefaultAppTitle = "Baby Tracker"
+	DefaultAPIPort    = "8080"
+	DefaultDataDir    = ".babytracker"
+	DefaultAppTitle   = "Baby Tracker"
+	DefaultCORSOrigin = "http://localhost:3000"
 )
 
 // Load reads configuration from environment variables, falling back to defaults.
@@ -31,8 +34,10 @@ const (
 //	APP_TITLE      - Desktop window title (default: Baby Tracker)
 func Load() (*Config, error) {
 	cfg := &Config{
-		APIPort:  envOr("PORT", DefaultAPIPort),
-		AppTitle: envOr("APP_TITLE", DefaultAppTitle),
+		APIPort:    envOr("PORT", DefaultAPIPort),
+		AppTitle:   envOr("APP_TITLE", DefaultAppTitle),
+		APIKey:     os.Getenv("API_KEY"),
+		CORSOrigin: envOr("CORS_ORIGIN", DefaultCORSOrigin),
 	}
 
 	// Data directory: use DATA_DIR if set, otherwise ~/.babytracker

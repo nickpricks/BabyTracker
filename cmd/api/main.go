@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("Failed to initialize storage at %s: %v", cfg.DataDir, err)
 	}
 
-	r := api.SetupRouter()
+	r := api.SetupRouter(cfg)
 	log.Printf("Baby Tracker API server running on http://localhost:%s", cfg.APIPort)
 	log.Printf("Data directory: %s", cfg.DataDir)
 	log.Fatal(http.ListenAndServe(":"+cfg.APIPort, r))

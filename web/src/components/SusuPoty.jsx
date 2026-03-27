@@ -1,40 +1,36 @@
 import React, { useState, useEffect } from "react";
-import { getFeeds, logFeed } from "../api";
+import { getDiapers, logDiaper } from "../api";
 
-const FEED_TYPES = [
-  "Bottle",
-  "Breast (Left)",
-  "Breast (Right)",
-  "Breast (Both)",
-  "Solid Food",
-];
+const DIAPER_TYPES = ["Wet", "Dirty", "Mixed"];
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 const getNow = () =>
   new Date().toLocaleTimeString("en-GB", { hour12: false }).slice(0, 8);
 
-export default function Feeds() {
-  const [feedType, setFeedType] = useState("");
+export default function SusuPoty() {
   const [date, setDate] = useState(getToday());
   const [time, setTime] = useState(getNow());
-  const [quantity, setQuantity] = useState("");
+  const [diaperType, setDiaperType] = useState("");
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
-  const [recentFeeds, setRecentFeeds] = useState([]);
+  const [recentDiapers, setRecentDiapers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchFeeds = async () => {
+  const [fetchError, setFetchError] = useState("");
+
+  const fetchDiapers = async () => {
     try {
-      const feeds = await getFeeds();
-      setRecentFeeds(feeds.slice(-10).reverse());
+      setFetchError("");
+      const entries = await getDiapers();
+      setRecentDiapers(entries.slice(-10).reverse());
     } catch {
-      // API may not be running - that's okay
+      setFetchError("Could not load diaper entries. Is the API server running?");
     }
   };
 
   useEffect(() => {
-    fetchFeeds();
+    fetchDiapers();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -43,20 +39,18 @@ export default function Feeds() {
     setFeedback("");
     setLoading(true);
     try {
-      await logFeed({
-        type: feedType,
-        date: date,
+      await logDiaper({
+        date,
         time: `${date}T${time}`,
-        quantity: quantity ? parseFloat(quantity) : 0,
-        notes: notes,
+        type: diaperType,
+        notes,
       });
-      setFeedback(`Feed logged: ${feedType} on ${date} at ${time}`);
-      setFeedType("");
+      setFeedback(`Diaper change logged: ${diaperType} on ${date}`);
       setDate(getToday());
       setTime(getNow());
-      setQuantity("");
+      setDiaperType("");
       setNotes("");
-      fetchFeeds();
+      fetchDiapers();
       setTimeout(() => setFeedback(""), 3000);
     } catch (err) {
       setError(err.message);
@@ -65,21 +59,21 @@ export default function Feeds() {
     }
   };
 
-  const quickBottle = () => {
-    setFeedType("Bottle");
+  const quickWet = () => {
+    setDiaperType("Wet");
     setDate(getToday());
     setTime(getNow());
   };
 
-  const quickBreast = () => {
-    setFeedType("Breast (Both)");
+  const quickDirty = () => {
+    setDiaperType("Dirty");
     setDate(getToday());
     setTime(getNow());
   };
 
   return (
     <div style={{ maxWidth: 500, margin: "0 auto" }}>
-      <h2>Log New Feed</h2>
+      <h2>The Susu-Poty Chronicles</h2>
       <div
         style={{
           background: "#f8f8f8",
@@ -91,15 +85,15 @@ export default function Feeds() {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 12 }}>
             <label>
-              <b>Feed Type</b>
+              <b>Diaper Type</b>
               <select
-                value={feedType}
-                onChange={(e) => setFeedType(e.target.value)}
-                style={{ marginLeft: 8, width: "60%" }}
+                value={diaperType}
+                onChange={(e) => setDiaperType(e.target.value)}
+                style={{ marginLeft: 8 }}
                 required
               >
-                <option value="">Select feed type...</option>
-                {FEED_TYPES.map((t) => (
+                <option value="">Select type...</option>
+                {DIAPER_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -134,42 +128,28 @@ export default function Feeds() {
           </div>
           <div style={{ marginBottom: 12 }}>
             <label>
-              <b>Quantity (optional)</b>
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                style={{ marginLeft: 8, width: 100 }}
-                min="0"
-                step="any"
-                placeholder="ml or oz"
-              />
-            </label>
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
               <b>Notes</b>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 style={{ marginLeft: 8, width: "80%", minHeight: 48 }}
-                placeholder="How did baby respond? Any concerns?"
+                placeholder="Any observations..."
               />
             </label>
           </div>
           <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-            <button type="button" onClick={quickBottle}>
-              Quick Bottle
+            <button type="button" onClick={quickWet}>
+              Quick Wet
             </button>
-            <button type="button" onClick={quickBreast}>
-              Quick Breast
+            <button type="button" onClick={quickDirty}>
+              Quick Dirty
             </button>
             <button
               type="submit"
               style={{ marginLeft: "auto" }}
               disabled={loading}
             >
-              {loading ? "Saving..." : "Log Feed"}
+              {loading ? "Saving..." : "Log Change"}
             </button>
           </div>
           {feedback && (
@@ -180,17 +160,18 @@ export default function Feeds() {
       </div>
       <hr />
       <div style={{ marginTop: 24 }}>
-        <h3>Recent Feeds</h3>
+        <h3>Recent Changes</h3>
         <div style={{ background: "#f8f8f8", padding: 16, borderRadius: 8 }}>
-          {recentFeeds.length === 0 ? (
-            <p style={{ color: "#666" }}>No feeds logged yet.</p>
+          {fetchError ? (
+            <p style={{ color: "red" }}>{fetchError}</p>
+          ) : recentDiapers.length === 0 ? (
+            <p style={{ color: "#666" }}>No diaper changes logged yet.</p>
           ) : (
             <ul style={{ margin: 0, padding: "0 0 0 20px" }}>
-              {recentFeeds.map((feed) => (
-                <li key={feed.id} style={{ marginBottom: 4 }}>
-                  <b>{feed.type}</b> on {feed.date}
-                  {feed.quantity > 0 && ` - ${feed.quantity} ml/oz`}
-                  {feed.notes && ` - ${feed.notes}`}
+              {recentDiapers.map((entry) => (
+                <li key={entry.id} style={{ marginBottom: 4 }}>
+                  <b>{entry.type}</b> on {entry.date}
+                  {entry.notes && ` - ${entry.notes}`}
                 </li>
               ))}
             </ul>

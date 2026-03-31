@@ -7,22 +7,27 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"babytracker/internal/config"
 	"babytracker/internal/models"
 	"babytracker/internal/storage"
+
+	"github.com/gorilla/mux"
 )
 
-func setupTestRouter(t *testing.T) {
+func testConfig() *config.Config {
+	return &config.Config{APIPort: "8080", CORSOrigin: "http://localhost:3000"}
+}
+
+func testRouter(t *testing.T) *mux.Router {
 	t.Helper()
-	// Override storage to use temp dir
-	sm, err := storage.NewStorageManager()
-	if err != nil {
-		t.Fatalf("failed to create storage manager: %v", err)
+	if err := storage.Init(t.TempDir()); err != nil {
+		t.Fatalf("failed to init test storage: %v", err)
 	}
-	_ = sm // storage uses global; we rely on temp dir via env or default
+	return SetupRouter(testConfig())
 }
 
 func TestHandleListFeeds_Empty(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 	req := httptest.NewRequest("GET", "/api/feeds", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -38,7 +43,7 @@ func TestHandleListFeeds_Empty(t *testing.T) {
 }
 
 func TestHandleLogFeed_InvalidJSON(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 	req := httptest.NewRequest("POST", "/api/feeds", bytes.NewBufferString("not json"))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -50,7 +55,7 @@ func TestHandleLogFeed_InvalidJSON(t *testing.T) {
 }
 
 func TestHandleLogFeed_MissingFields(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 	body, _ := json.Marshal(models.FeedEntry{})
 	req := httptest.NewRequest("POST", "/api/feeds", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -63,7 +68,7 @@ func TestHandleLogFeed_MissingFields(t *testing.T) {
 }
 
 func TestHandleLogSleep_MissingFields(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 	body, _ := json.Marshal(models.SleepEntry{})
 	req := httptest.NewRequest("POST", "/api/sleep", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -76,7 +81,7 @@ func TestHandleLogSleep_MissingFields(t *testing.T) {
 }
 
 func TestHandleLogGrowth_MissingDate(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 	body, _ := json.Marshal(models.GrowthEntry{})
 	req := httptest.NewRequest("POST", "/api/growth", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -89,7 +94,7 @@ func TestHandleLogGrowth_MissingDate(t *testing.T) {
 }
 
 func TestHandleLogDiaper_MissingFields(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 	body, _ := json.Marshal(models.DiaperEntry{})
 	req := httptest.NewRequest("POST", "/api/diapers", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -102,7 +107,7 @@ func TestHandleLogDiaper_MissingFields(t *testing.T) {
 }
 
 func TestHandleGetFeed_NotFound(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 	req := httptest.NewRequest("GET", "/api/feeds/999", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -113,19 +118,19 @@ func TestHandleGetFeed_NotFound(t *testing.T) {
 }
 
 func TestCORSHeaders(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 	// Test CORS on a regular GET request (OPTIONS routing depends on mux config)
 	req := httptest.NewRequest("GET", "/api/feeds", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	if w.Header().Get("Access-Control-Allow-Origin") != "*" {
-		t.Error("expected CORS header Access-Control-Allow-Origin: *")
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "http://localhost:3000" {
+		t.Errorf("expected CORS header http://localhost:3000, got %s", got)
 	}
 }
 
 func TestListEndpoints_ReturnJSON(t *testing.T) {
-	router := SetupRouter()
+	router := testRouter(t)
 
 	endpoints := []string{"/api/feeds", "/api/sleep", "/api/growth", "/api/diapers"}
 	for _, ep := range endpoints {

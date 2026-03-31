@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"babytracker/internal/models"
 )
@@ -13,6 +14,7 @@ import (
 // StorageManager handles all data persistence operations.
 type StorageManager struct {
 	dataDir string
+	mu      sync.Mutex
 }
 
 // NewStorageManager creates a storage manager with the default data directory (~/.babytracker).
@@ -26,13 +28,17 @@ func NewStorageManager() (*StorageManager, error) {
 
 // NewStorageManagerWithDir creates a storage manager using the given directory.
 func NewStorageManagerWithDir(dataDir string) (*StorageManager, error) {
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0700); err != nil {
 		return nil, fmt.Errorf("failed to create data directory: %w", err)
 	}
 	return &StorageManager{dataDir: dataDir}, nil
 }
 
-var globalStorage *StorageManager
+var (
+	globalStorage *StorageManager
+	initOnce      sync.Once
+	initErr       error
+)
 
 // Init initializes the global storage with a specific data directory.
 // Call this early in main() before any Save/Load calls.
@@ -43,16 +49,19 @@ func Init(dataDir string) error {
 		return err
 	}
 	globalStorage = sm
+	initOnce.Do(func() {}) // mark as done so getStorage won't re-init
 	return nil
 }
 
 func getStorage() (*StorageManager, error) {
-	if globalStorage == nil {
-		var err error
-		globalStorage, err = NewStorageManager()
-		if err != nil {
-			return nil, err
-		}
+	if globalStorage != nil {
+		return globalStorage, nil
+	}
+	initOnce.Do(func() {
+		globalStorage, initErr = NewStorageManager()
+	})
+	if initErr != nil {
+		return nil, initErr
 	}
 	return globalStorage, nil
 }
@@ -81,8 +90,13 @@ func saveJSON[T any](sm *StorageManager, filename string, items []T) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal %s: %w", filename, err)
 	}
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+	// Atomic write: temp file + rename prevents corruption on crash (FINDING-25)
+	tmpPath := filePath + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write %s: %w", filename, err)
+	}
+	if err := os.Rename(tmpPath, filePath); err != nil {
+		return fmt.Errorf("failed to rename %s: %w", filename, err)
 	}
 	return nil
 }
@@ -105,9 +119,11 @@ func SaveFeed(feed *models.FeedEntry) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
 	feeds, err := loadJSON[models.FeedEntry](sm, "feeds.json")
 	if err != nil {
-		feeds = []models.FeedEntry{}
+		return fmt.Errorf("refusing to save over unreadable data file: %w", err)
 	}
 	ids := make([]int, len(feeds))
 	for i, f := range feeds {
@@ -133,9 +149,11 @@ func SaveSleep(entry *models.SleepEntry) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
 	entries, err := loadJSON[models.SleepEntry](sm, "sleep.json")
 	if err != nil {
-		entries = []models.SleepEntry{}
+		return fmt.Errorf("refusing to save over unreadable data file: %w", err)
 	}
 	ids := make([]int, len(entries))
 	for i, e := range entries {
@@ -161,9 +179,11 @@ func SaveGrowth(entry *models.GrowthEntry) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
 	entries, err := loadJSON[models.GrowthEntry](sm, "growth.json")
 	if err != nil {
-		entries = []models.GrowthEntry{}
+		return fmt.Errorf("refusing to save over unreadable data file: %w", err)
 	}
 	ids := make([]int, len(entries))
 	for i, e := range entries {
@@ -189,9 +209,11 @@ func SaveDiaper(entry *models.DiaperEntry) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
 	entries, err := loadJSON[models.DiaperEntry](sm, "diapers.json")
 	if err != nil {
-		entries = []models.DiaperEntry{}
+		return fmt.Errorf("refusing to save over unreadable data file: %w", err)
 	}
 	ids := make([]int, len(entries))
 	for i, e := range entries {

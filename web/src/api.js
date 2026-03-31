@@ -1,7 +1,15 @@
 import { API_BASE } from "./config";
 
+const API_KEY = import.meta.env.VITE_API_KEY || "";
+
+function authHeaders() {
+  const h = {};
+  if (API_KEY) h["Authorization"] = `Bearer ${API_KEY}`;
+  return h;
+}
+
 async function apiGet(path) {
-  const res = await fetch(`${API_BASE}${path}`);
+  const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
   if (!res.ok) {
     throw new Error(`GET ${path} failed: ${res.status}`);
   }
@@ -11,7 +19,7 @@ async function apiGet(path) {
 async function apiPost(path, body) {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
   });
   if (!res.ok) {

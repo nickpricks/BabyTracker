@@ -21,8 +21,8 @@ api: ## Run the Go API server
 desktop: ## Run the Fyne desktop app
 	go run ./cmd/desktop
 
-web: ## Run the React dev server (requires API running)
-	cd web && bun start
+web: ## Run the Vite dev server (requires API running)
+	cd web && npx vite
 
 # --- Build ---
 
@@ -34,8 +34,8 @@ build-api: ## Build the API server binary
 build-desktop: ## Build the desktop app binary
 	go build -o bin/desktop ./cmd/desktop
 
-build-web: ## Build the React app for production
-	cd web && npx react-scripts build
+build-web: ## Build the web app for production
+	cd web && npx vite build
 
 # --- Test ---
 
@@ -47,23 +47,23 @@ test-cover: ## Run Go tests with coverage report
 	go tool cover -func=coverage.out
 	@rm -f coverage.out
 
-test-web: ## Run React tests (TODO: no test cases written yet)
-	cd web && bun test -- --watchAll=false
+test-web: ## Run web tests (vitest)
+	cd web && npx vitest run
 
 test-all: ## Run all tests (Go + coverage + React), stops on first failure
 	go test ./internal/... && \
 	go test -coverprofile=coverage.out ./internal/... && \
 	go tool cover -func=coverage.out && \
 	rm -f coverage.out && \
-	cd web && bun test -- --watchAll=false
+	cd web && npx vitest run
 
 # --- Lint / Tidy ---
 
 lint: ## Vet Go code
 	go vet ./...
 
-lint-web: ## Lint React code
-	cd web && npm run lint
+lint-web: ## Lint web code
+	cd web && bun run lint
 
 tidy: ## Tidy Go modules
 	go mod tidy

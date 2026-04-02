@@ -1,0 +1,39 @@
+/* ═══════════════════════════════════════════════════════════════
+   Midnight Feed — Ultra-dim 3am theme
+   Dark only. Minimal contrast, warm amber, easy on bleary eyes.
+   Designed for feeding/diaper changes in a dark nursery.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Midnight Feed (dark only) ───────────────────────────────── */
+
+.theme-midnight-feed {
+  --bg-primary: #0d0b08;
+  --bg-card: #151210;
+  --bg-surface: #1c1814;
+  --bg-hover: #241f1a;
+  --text-primary: #998877;
+  --text-heading: #bbaa88;
+  --text-muted: #665544;
+  --text-subtle: #443322;
+  --accent: #cc8833;
+  --accent-dim: #aa7028;
+  --accent-secondary: #887744;
+  --accent-glow: rgba(204, 136, 51, 0.2);
+  --border-color: #1c1814;
+  --border-subtle: #241f1a;
+
+  /* Module colors — ultra-dim warm tones */
+  --mod-feeds: #88774a;
+  --mod-sleep: #776688;
+  --mod-growth: #887755;
+  --mod-diaper: #667788;
+
+  --font-theme-display: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  --font-theme-body: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Background: none — pure darkness ────────────────────────── */
+
+.theme-midnight-feed .bg-topo {
+  background-image: none;
+}

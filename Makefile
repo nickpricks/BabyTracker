@@ -1,6 +1,6 @@
 .PHONY: dev api desktop web build build-api build-desktop build-web \
-       test test-v test-cover test-web clean clean-web clean-bin \
-       lint lint-web install-web tidy env help
+       test test-all test-cover test-web clean clean-web clean-bin \
+       lint lint-web install-web tidy update env bench bench-restore help setup
 
 # Load .env if it exists (values become available as env vars to all targets)
 -include .env
@@ -22,7 +22,7 @@ desktop: ## Run the Fyne desktop app
 	go run ./cmd/desktop
 
 web: ## Run the Vite dev server (requires API running)
-	cd web && npx vite
+	cd web && bun run vite
 
 # --- Build ---
 
@@ -35,7 +35,7 @@ build-desktop: ## Build the desktop app binary
 	go build -o bin/desktop ./cmd/desktop
 
 build-web: ## Build the web app for production
-	cd web && npx vite build
+	cd web && bun run vite build
 
 # --- Test ---
 
@@ -48,14 +48,13 @@ test-cover: ## Run Go tests with coverage report
 	@rm -f coverage.out
 
 test-web: ## Run web tests (vitest)
-	cd web && npx vitest run
+	cd web && bun run vitest run
 
 test-all: ## Run all tests (Go + coverage + React), stops on first failure
-	go test ./internal/... && \
 	go test -coverprofile=coverage.out ./internal/... && \
 	go tool cover -func=coverage.out && \
 	rm -f coverage.out && \
-	cd web && npx vitest run
+	cd web && bun run vitest run
 
 # --- Lint / Tidy ---
 
@@ -68,17 +67,38 @@ lint-web: ## Lint web code
 tidy: ## Tidy Go modules
 	go mod tidy
 
+update: ## Update all Go dependencies to latest minor/patch
+	go get -u ./...
+	go mod tidy
+
 # --- Setup ---
 
 env: ## Create .env files from examples (won't overwrite existing)
-	@test -f .env || (cp .env.example .env && echo "Created .env")
-	@test -f web/.env || (cp web/.env.example web/.env && echo "Created web/.env")
-	@test -f .env && test -f web/.env && echo "Environment files ready."
+	@test -f .env || (cp .env.example .env && echo "Created .env"); \
+	 test -f web/.env || (cp web/.env.example web/.env && echo "Created web/.env"); \
+	 echo "Environment files ready."
 
 install-web: ## Install web dependencies
 	cd web && bun install
 
 setup: env tidy install-web ## Full project setup (env + deps)
+
+# --- Bench ---
+
+bench: ## ⚠️  Generate 10k entries per module (backs up existing data first)
+	@echo "⚠️  WARNING: This will overwrite ~/.babytracker/ data"
+	@echo "   Existing data will be backed up to ~/.babytracker/.backup/"
+	@echo ""
+	go run ./cmd/bench
+
+bench-restore: ## Restore data from bench backup
+	@if [ -d "$$HOME/.babytracker/.backup" ]; then \
+		cp "$$HOME/.babytracker/.backup/"*.json "$$HOME/.babytracker/" 2>/dev/null && \
+		echo "✅ Data restored from backup" && \
+		rm -rf "$$HOME/.babytracker/.backup"; \
+	else \
+		echo "❌ No backup found at ~/.babytracker/.backup/"; \
+	fi
 
 # --- Clean ---
 
@@ -93,7 +113,7 @@ clean-web: ## Remove web build output
 # --- Help ---
 
 help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help

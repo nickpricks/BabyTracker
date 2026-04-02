@@ -16,8 +16,9 @@ make web            # Vite dev server only (needs API running)
 make test           # Go tests: go test ./internal/...
 make test-web       # Web tests (vitest)
 make test-cover     # Go tests with coverage report
+make test-all       # All tests (Go + coverage + web)
 make lint           # go vet ./...
-make lint-web       # eslint web/src
+make lint-web       # bun run lint (web/src)
 make build          # Build all (bin/api, bin/desktop, web/build)
 ```
 
@@ -62,7 +63,7 @@ Desktop writes JSON directly; Web/PWA -> API -> JSON files in ~/.babytracker/
 - No tests for `internal/desktop/` (Fyne UI — requires display)
 - Storage tests use `t.TempDir()` for isolation
 - API handler tests use `httptest.NewRecorder()` + `t.TempDir()` for hermetic tests
-- Web tests: 41 tests across api.js, all 4 components, ErrorBoundary, App routing (vitest)
+- Web tests: 43 tests across api.js, all 4 components, ErrorBoundary, App routing (vitest)
 
 ## Environment
 

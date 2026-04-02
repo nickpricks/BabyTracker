@@ -115,13 +115,13 @@ The Fyne desktop app is structured as a **tabbed interface** with one tab per tr
 
 ### 2.7 The Web Application
 
-A **Create React App** project with client-side routing via `react-router-dom`:
+A **Vite** React project with client-side routing via `react-router-dom`:
 
 - `App.jsx` wraps the router
 - `Main.jsx` provides the navigation layout (header + nav links)
 - `Routes.jsx` maps URL paths to components
 - `api.js` is the HTTP client layer (generic `apiGet`/`apiPost` wrappers)
-- `config.js` centralizes the API base URL (configurable via `REACT_APP_API_BASE`)
+- `config.js` centralizes the API base URL (configurable via `VITE_API_BASE`)
 - Each component (Feeds, Sleep, Growth, SusuPoty) is a complete form with state management, submission, validation feedback, and a "recent entries" display
 
 **PWA Features**:
@@ -195,9 +195,11 @@ The configuration layer (`internal/config`) reads from environment variables wit
 | `PORT` | `8080` | API server | HTTP listen port |
 | `DATA_DIR` | `~/.babytracker` | Both | Absolute path for JSON data files |
 | `APP_TITLE` | `Baby Tracker` | Desktop | Window title |
-| `REACT_APP_API_BASE` | `http://localhost:8080/api` | Web | API endpoint URL |
+| `VITE_API_BASE` | `http://localhost:8080/api` | Web | API endpoint URL |
+| `API_KEY` | *(empty)* | API server | Bearer token for auth (empty = no auth) |
+| `CORS_ORIGIN` | `http://localhost:3000` | API server | Allowed CORS origin |
 
-**Loading chain**: Makefile `-include .env` + `export` makes root `.env` available to all Go targets. CRA reads `web/.env` natively.
+**Loading chain**: Makefile `-include .env` + `export` makes root `.env` available to all Go targets. Vite reads `web/.env` natively.
 
 ---
 
@@ -245,8 +247,8 @@ The Makefile provides a **comprehensive build pipeline**:
 - **API handler tests** (`handlers_test.go`): HTTP-level tests using `httptest.NewRecorder()` and `httptest.NewRequest()`
 
 ### Web Tests
-- CRA test runner configured (`make test-web`)
-- **No test cases written yet** -- this is a known gap
+- Vitest runner configured (`make test-web`)
+- 43 tests across api.js, all 4 components, ErrorBoundary, App routing (vitest)
 
 ---
 
@@ -277,10 +279,10 @@ The Makefile provides a **comprehensive build pipeline**:
 
 ## 8. Security Considerations
 
-- **No authentication** currently (single-user, local-only design)
-- CORS is set to `*` (acceptable for local dev, must be restricted in production)
-- JSON data files are stored with `0644` permissions
-- No input sanitization beyond basic field presence checks -- future versions should add proper validation
+- **Bearer token auth** via `API_KEY` env var (empty = no auth, for local dev)
+- CORS: configurable origin via `CORS_ORIGIN` env var (default: `http://localhost:3000`)
+- Request body limit: 1MB max via `http.MaxBytesReader` middleware
+- JSON data files stored with `0600` permissions (owner-only)
 - `.env` files are gitignored to prevent credential leakage
 
 ---
@@ -290,7 +292,7 @@ The Makefile provides a **comprehensive build pipeline**:
 - **Storage**: O(n) reads (full file scan), O(n) writes (rewrite entire file). Perfectly adequate for baby tracking volumes (typically < 50 entries/day across all modules).
 - **API**: Single-threaded handler execution with gorilla/mux routing. Handles concurrent requests via Go's goroutine model.
 - **Desktop**: Native rendering via Fyne/OpenGL. Startup time dominated by GUI initialization (~1-2s on macOS).
-- **Web**: CRA development build with hot reload. Production builds benefit from code splitting and service worker caching.
+- **Web**: Vite development build with HMR. Production builds benefit from code splitting and service worker caching.
 
 ---
 
@@ -303,4 +305,5 @@ The Makefile provides a **comprehensive build pipeline**:
 5. Service worker caches the shell but not API responses (no offline data access)
 6. Placeholder PWA icons -- need proper branding assets
 7. No CI/CD pipeline configured
-8. Go API has no request rate limiting or payload size limits
+8. Go API has no request rate limiting
+9. Desktop "Recent Activity" sections are static placeholders -- tabs save data but never call `LoadFeeds()`/`LoadSleep()` etc. to display it

@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+@import "./themes/lullaby.css";
+@import "./themes/nursery-os.css";
+@import "./themes/midnight-feed.css";
+@import "./themes/buttons.css";
+@import "./themes/effects.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════
+   Tailwind v4 @theme — Semantic Token Mappings
+   Same convention as Floor-Tracker for future unification.
+   ═══════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Semantic surface colors */
+  --color-surface: var(--bg-primary);
+  --color-surface-card: var(--bg-card);
+  --color-surface-raised: var(--bg-surface);
+  --color-surface-hover: var(--bg-hover);
+
+  /* Semantic foreground (text) colors */
+  --color-fg: var(--text-primary);
+  --color-fg-heading: var(--text-heading);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-subtle: var(--text-subtle);
+
+  /* Accent colors */
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-accent-secondary: var(--accent-secondary);
+
+  /* Per-module semantic colors */
+  --color-mod-feeds: var(--mod-feeds);
+  --color-mod-sleep: var(--mod-sleep);
+  --color-mod-growth: var(--mod-growth);
+  --color-mod-diaper: var(--mod-diaper);
+
+  /* Border colors */
+  --color-line: var(--border-color);
+  --color-line-subtle: var(--border-subtle);
+
+  /* Theme-aware fonts */
+  --font-display: var(--font-theme-display);
+  --font-body: var(--font-theme-body);
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-up: slide-up 0.4s ease-out;
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ── Theme-Aware Utility Classes ──────────────────────────────── */
+
+.font-display { font-family: var(--font-theme-display); }
+.font-body    { font-family: var(--font-theme-body); }
+
+/* ── Base Resets ──────────────────────────────────────────────── */
+
+body {
+  font-family: var(--font-theme-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ── Form Inputs ─────────────────────────────────────────────── */
+
+@layer components {
+  .input-field {
+    @apply w-full rounded-xl border border-line bg-surface-card px-4 py-2.5
+           text-fg placeholder:text-fg-subtle
+           outline-none transition-all duration-200
+           focus:border-accent focus:ring-2 focus:ring-accent/20;
+  }
+
+  .card {
+    @apply rounded-2xl border border-line-subtle bg-surface-card p-5
+           shadow-sm transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply rounded-2xl border border-line-subtle bg-surface-card p-5
+           shadow-sm transition-all duration-200
+           hover:shadow-md hover:border-line;
+  }
+}

@@ -1,0 +1,73 @@
+/* ═══════════════════════════════════════════════════════════════
+   Nursery_OS — Cyberpunk baby monitor (mockup image 3)
+   Dark only. Neon glows, CRT vibes, "Vital Streams" aesthetic.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Nursery_OS (dark only) ──────────────────────────────────── */
+
+.theme-nursery-os {
+  --bg-primary: #080810;
+  --bg-card: #0e0e1c;
+  --bg-surface: #14142a;
+  --bg-hover: #1a1a36;
+  --text-primary: #a8a8c0;
+  --text-heading: #d0d0e0;
+  --text-muted: #5a5a78;
+  --text-subtle: #3a3a52;
+  --accent: #00e4ff;
+  --accent-dim: #00b8cc;
+  --accent-secondary: #ff44aa;
+  --accent-glow: rgba(0, 228, 255, 0.25);
+  --border-color: #1a1a36;
+  --border-subtle: #242448;
+
+  /* Module colors — neon variants */
+  --mod-feeds: #00ff88;
+  --mod-sleep: #aa66ff;
+  --mod-growth: #ffaa00;
+  --mod-diaper: #00ccff;
+
+  --font-theme-display: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
+  --font-theme-body: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ── Background Pattern: Scanlines + grid ────────────────────── */
+
+.theme-nursery-os .bg-topo {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 228, 255, 0.015) 2px,
+      rgba(0, 228, 255, 0.015) 3px
+    ),
+    linear-gradient(
+      135deg,
+      rgba(0, 228, 255, 0.02) 0%,
+      transparent 50%,
+      rgba(255, 68, 170, 0.02) 100%
+    );
+}
+
+/* ── CRT Vignette ────────────────────────────────────────────── */
+
+.theme-nursery-os .fx-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+}
+
+/* ── Neon text glow ──────────────────────────────────────────── */
+
+.theme-nursery-os .glow-text {
+  text-shadow:
+    0 0 10px var(--accent-glow),
+    0 0 30px color-mix(in srgb, var(--accent-glow) 40%, transparent);
+}

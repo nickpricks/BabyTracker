@@ -9,26 +9,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// SetupRouter sets up the mux router, CORS middleware, and all API endpoints.
-func SetupRouter(cfg *config.Config) *mux.Router {
+// SetupRouter sets up the mux router, CORS, auth, and all API endpoints.
+// Returns an http.Handler (not *mux.Router) because CORS wraps the router
+// to intercept OPTIONS preflight before mux's method matching rejects it.
+func SetupRouter(cfg *config.Config) http.Handler {
 	r := mux.NewRouter()
-
-	r.Use(mux.CORSMethodMiddleware(r))
-
-	// CORS middleware — use configured origin instead of wildcard (FINDING-03)
-	corsOrigin := cfg.CORSOrigin
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", corsOrigin)
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-			if req.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-			next.ServeHTTP(w, req)
-		})
-	})
 
 	// Request body size limit — 1MB max (FINDING-08)
 	r.Use(func(next http.Handler) http.Handler {
@@ -38,10 +23,14 @@ func SetupRouter(cfg *config.Config) *mux.Router {
 		})
 	})
 
-	// API key auth middleware — skip if no key configured
+	// API key auth middleware — skip if no key configured, skip OPTIONS
 	if cfg.APIKey != "" {
 		r.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				if req.Method == "OPTIONS" {
+					next.ServeHTTP(w, req)
+					return
+				}
 				token := strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
 				if token != cfg.APIKey {
 					http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
@@ -72,5 +61,27 @@ func SetupRouter(cfg *config.Config) *mux.Router {
 	r.HandleFunc("/api/diapers", handleLogDiaper).Methods("POST")
 	r.HandleFunc("/api/diapers/{id:[0-9]+}", handleGetDiaper).Methods("GET")
 
-	return r
+	// CORS wraps the entire router so OPTIONS preflight is handled before
+	// mux rejects it with 405 (routes only register GET/POST).
+	// If configured origin is localhost, accept any localhost port for dev.
+	return corsHandler(cfg.CORSOrigin, r)
+}
+
+func corsHandler(corsOrigin string, next http.Handler) http.Handler {
+	isLocalhost := strings.HasPrefix(corsOrigin, "http://localhost")
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		origin := req.Header.Get("Origin")
+		allowedOrigin := corsOrigin
+		if isLocalhost && strings.HasPrefix(origin, "http://localhost") {
+			allowedOrigin = origin
+		}
+		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+		if req.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, req)
+	})
 }

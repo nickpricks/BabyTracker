@@ -13,12 +13,20 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ maxWidth: 500, margin: "40px auto", textAlign: "center" }}>
-          <h2>Something went wrong</h2>
-          <p style={{ color: "#666" }}>
+        <div className="card text-center py-12 max-w-md mx-auto mt-10">
+          <p className="text-4xl mb-4">😵</p>
+          <h2 className="font-display text-xl font-bold text-fg-heading mb-2">
+            Something went wrong
+          </h2>
+          <p className="text-sm text-fg-muted mb-6">
             The app encountered an unexpected error. Try refreshing the page.
           </p>
-          <button onClick={() => window.location.reload()}>Refresh</button>
+          <button
+            onClick={() => window.location.reload()}
+            className="btn-primary"
+          >
+            Refresh
+          </button>
         </div>
       );
     }

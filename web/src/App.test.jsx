@@ -1,6 +1,5 @@
 import { vi, describe, it, expect } from "vitest";
-import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 
 vi.mock("./api", () => ({
@@ -21,11 +20,13 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: /feeds/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /sleep/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /growth/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /susu-poty/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /diapers/i })).toBeInTheDocument();
   });
 
-  it("renders feeds page by default (redirects from /)", () => {
+  it("renders dashboard by default", async () => {
     render(<App />);
-    expect(screen.getByText("Log New Feed")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    });
   });
 });

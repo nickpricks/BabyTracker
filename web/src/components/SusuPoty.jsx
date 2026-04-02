@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getDiapers, logDiaper } from "../api";
 
 const DIAPER_TYPES = ["Wet", "Dirty", "Mixed"];
@@ -16,7 +16,6 @@ export default function SusuPoty() {
   const [error, setError] = useState("");
   const [recentDiapers, setRecentDiapers] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [fetchError, setFetchError] = useState("");
 
   const fetchDiapers = async () => {
@@ -41,7 +40,7 @@ export default function SusuPoty() {
     try {
       await logDiaper({
         date,
-        time: `${date}T${time}`,
+        time: `${date}T${time}Z`,
         type: diaperType,
         notes,
       });
@@ -72,111 +71,114 @@ export default function SusuPoty() {
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: "0 auto" }}>
-      <h2>The Susu-Poty Chronicles</h2>
-      <div
-        style={{
-          background: "#f8f8f8",
-          padding: 20,
-          borderRadius: 8,
-          marginBottom: 24,
-        }}
-      >
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Diaper Type</b>
-              <select
-                value={diaperType}
-                onChange={(e) => setDiaperType(e.target.value)}
-                style={{ marginLeft: 8 }}
-                required
-              >
-                <option value="">Select type...</option>
-                {DIAPER_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </label>
+    <div className="space-y-6 animate-slide-up">
+      {/* Form Card */}
+      <div className="card">
+        <div className="flex items-center gap-3 mb-5">
+          <span className="w-10 h-10 rounded-xl bg-mod-diaper/15 flex items-center justify-center text-xl">
+            🧷
+          </span>
+          <h2 className="font-display text-xl font-bold text-fg-heading">
+            The Susu-Poty Chronicles
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-fg-muted">Diaper Type</label>
+            <select
+              value={diaperType}
+              onChange={(e) => setDiaperType(e.target.value)}
+              className="input-field"
+              required
+            >
+              <option value="">Select type...</option>
+              {DIAPER_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Date</b>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-fg-muted">Date</label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                style={{ marginLeft: 8 }}
+                className="input-field"
                 required
               />
-            </label>
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Time</b>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-fg-muted">Time</label>
               <input
                 type="time"
                 step="1"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                style={{ marginLeft: 8 }}
+                className="input-field"
                 required
               />
-            </label>
+            </div>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Notes</b>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                style={{ marginLeft: 8, width: "80%", minHeight: 48 }}
-                placeholder="Any observations..."
-              />
-            </label>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-fg-muted">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="input-field min-h-[60px] resize-y"
+              placeholder="Any observations..."
+            />
           </div>
-          <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-            <button type="button" onClick={quickWet}>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button type="button" onClick={quickWet} className="btn-quick border-mod-diaper/30 hover:border-mod-diaper hover:text-mod-diaper">
               Quick Wet
             </button>
-            <button type="button" onClick={quickDirty}>
+            <button type="button" onClick={quickDirty} className="btn-quick border-mod-diaper/30 hover:border-mod-diaper hover:text-mod-diaper">
               Quick Dirty
             </button>
-            <button
-              type="submit"
-              style={{ marginLeft: "auto" }}
-              disabled={loading}
-            >
+            <button type="submit" disabled={loading} className="btn-primary ml-auto disabled:opacity-50">
               {loading ? "Saving..." : "Log Change"}
             </button>
           </div>
+
           {feedback && (
-            <div style={{ color: "green", marginTop: 8 }}>{feedback}</div>
+            <p className="text-sm text-mod-diaper font-medium animate-fade-in">{feedback}</p>
           )}
-          {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
+          {error && (
+            <p className="text-sm text-red-500 font-medium animate-fade-in">{error}</p>
+          )}
         </form>
       </div>
-      <hr />
-      <div style={{ marginTop: 24 }}>
-        <h3>Recent Changes</h3>
-        <div style={{ background: "#f8f8f8", padding: 16, borderRadius: 8 }}>
-          {fetchError ? (
-            <p style={{ color: "red" }}>{fetchError}</p>
-          ) : recentDiapers.length === 0 ? (
-            <p style={{ color: "#666" }}>No diaper changes logged yet.</p>
-          ) : (
-            <ul style={{ margin: 0, padding: "0 0 0 20px" }}>
-              {recentDiapers.map((entry) => (
-                <li key={entry.id} style={{ marginBottom: 4 }}>
-                  <b>{entry.type}</b> on {entry.date}
-                  {entry.notes && ` - ${entry.notes}`}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+
+      {/* Recent Changes */}
+      <div className="card">
+        <h3 className="font-display text-lg font-bold text-fg-heading mb-4">
+          Recent Changes
+        </h3>
+        {fetchError ? (
+          <p className="text-sm text-red-500">{fetchError}</p>
+        ) : recentDiapers.length === 0 ? (
+          <p className="text-sm text-fg-muted">No diaper changes logged yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {recentDiapers.map((entry) => (
+              <li
+                key={entry.id}
+                className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
+              >
+                <span className="text-sm font-semibold text-fg">{entry.type}</span>
+                <span className="text-xs text-fg-muted">{entry.date}</span>
+                {entry.notes && (
+                  <span className="text-xs text-fg-subtle truncate">{entry.notes}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

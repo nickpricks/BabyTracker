@@ -12,7 +12,7 @@ make desktop        # Fyne desktop app only
 make web            # React dev server only (needs API running)
 make test           # Go tests: go test ./internal/...
 make test-cover     # Go tests with coverage
-make test-web       # React tests (no test cases yet)
+make test-web       # Web tests (vitest, 43 tests)
 make lint           # go vet ./...
 make lint-web       # eslint web/src
 make build          # Build all (bin/api, bin/desktop, web/build)
@@ -28,7 +28,7 @@ internal/storage/         -> Generic JSON persistence (~/.babytracker/)
 internal/api/             -> REST handlers + gorilla/mux router
 internal/config/          -> Env-based config (PORT, DATA_DIR, APP_TITLE)
 internal/desktop/         -> Fyne UI (app.go, layout.go, tabs/)
-web/src/                  -> React SPA (CRA, react-router-dom)
+web/src/                  -> React SPA (Vite + react-router-dom)
 ```
 
 Data flow: Desktop writes JSON directly; Web/PWA -> API server -> JSON files.
@@ -39,23 +39,22 @@ Data flow: Desktop writes JSON directly; Web/PWA -> API server -> JSON files.
 - `internal/api/router.go` -- Route registration + CORS middleware
 - `internal/api/handlers.go` -- Feed handlers (pattern template for all modules)
 - `web/src/api.js` -- `apiGet`/`apiPost` wrappers around fetch
-- `web/src/config.js` -- API base URL from REACT_APP_API_BASE
+- `web/src/config.js` -- API base URL from VITE_API_BASE
 
 ## Code Conventions
 
 - Go module: `babytracker` (Go 1.24, Fyne v2, gorilla/mux)
-- Web: React 18 + CRA, bun for package management
+- Web: React 18, Vite, bun for package management
 - Storage: JSON files in `~/.babytracker/` (feeds.json, sleep.json, growth.json, diapers.json)
 - ID generation: `max(existing IDs) + 1` -- not `len + 1`
 - API routes: `/api/{resource}` (GET list, POST create), `/api/{resource}/{id}` (GET by ID)
-- CORS: wildcard `*` via middleware in router.go
+- CORS: configurable origin via CORS_ORIGIN env var (default: http://localhost:3000)
 - Date format: `YYYY-MM-DD` (string), Time: `time.Time` (Go) / ISO string (JSON)
 - Handlers follow pattern: decode -> validate required fields -> log -> save -> respond
 
 ## Gotchas
 
-- `web/src/config.js` line 1 can have a spurious path prefix causing eslint parse errors -- it's real content, not a display artifact
-- CRA requires `"eslintConfig": { "extends": ["react-app"] }` in web/package.json for JSX parsing
+- Component files use .jsx extension (Vite requires this for JSX)
 - macOS Fyne builds emit `ld: warning: ignoring duplicate libraries: '-lobjc'` -- harmless, ignore it
 - gorilla/mux OPTIONS requests bypass middleware unless the route explicitly allows OPTIONS method (handled in router.go CORS middleware)
 - Desktop app uses `storage` package directly (no HTTP); web app goes through the API
@@ -63,8 +62,8 @@ Data flow: Desktop writes JSON directly; Web/PWA -> API server -> JSON files.
 
 ## Environment
 
-- `.env` at root: `PORT` (API, default 8080), `DATA_DIR`, `APP_TITLE`
-- `web/.env`: React env vars (`REACT_APP_API_BASE`)
+- `.env` at root: `PORT` (8080), `DATA_DIR`, `APP_TITLE`, `API_KEY`, `CORS_ORIGIN`
+- `web/.env`: Vite env vars (`VITE_API_BASE`, `VITE_API_KEY`)
 - Run `make env` to create from `.env.example` templates
 - Makefile loads root `.env` automatically via `-include .env` + `export`
 
@@ -73,4 +72,4 @@ Data flow: Desktop writes JSON directly; Web/PWA -> API server -> JSON files.
 - Go tests: `go test ./internal/...` (models, storage, API handlers)
 - Storage tests use temp dirs via `t.TempDir()`
 - API handler tests use `httptest.NewRecorder()`
-- Web tests: placeholder only (`make test-web`), no test cases written yet
+- Web tests: 43 tests across api.js, all 4 components, ErrorBoundary, App routing (vitest)

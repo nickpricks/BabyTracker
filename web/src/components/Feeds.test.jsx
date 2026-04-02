@@ -1,5 +1,4 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Feeds from "./Feeds";
@@ -20,7 +19,7 @@ describe("Feeds", () => {
   it("renders the form", () => {
     getFeeds.mockResolvedValue([]);
     render(<Feeds />);
-    expect(screen.getByText("Log New Feed")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /log feed/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /log feed/i })).toBeInTheDocument();
   });
 

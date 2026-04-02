@@ -11,14 +11,13 @@ import (
 	"babytracker/internal/models"
 	"babytracker/internal/storage"
 
-	"github.com/gorilla/mux"
 )
 
 func testConfig() *config.Config {
 	return &config.Config{APIPort: "8080", CORSOrigin: "http://localhost:3000"}
 }
 
-func testRouter(t *testing.T) *mux.Router {
+func testRouter(t *testing.T) http.Handler {
 	t.Helper()
 	if err := storage.Init(t.TempDir()); err != nil {
 		t.Fatalf("failed to init test storage: %v", err)

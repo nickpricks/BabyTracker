@@ -1,0 +1,77 @@
+/* ═══════════════════════════════════════════════════════════════
+   Lullaby — The default BabyTracker theme
+   Light: Warm cream nursery (mockup image 1)
+   Dark:  Soft blue-tinted night mode (mockup image 2)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Lullaby Light ────────────────────────────────────────────── */
+
+.theme-lullaby {
+  --bg-primary: #faf6ef;
+  --bg-card: #ffffff;
+  --bg-surface: #f5efe5;
+  --bg-hover: #efe8db;
+  --text-primary: #3d3529;
+  --text-heading: #2a2318;
+  --text-muted: #8a7e6e;
+  --text-subtle: #b5aa98;
+  --accent: #e8a44a;
+  --accent-dim: #d4903a;
+  --accent-secondary: #7bb5a3;
+  --accent-glow: rgba(232, 164, 74, 0.25);
+  --border-color: #e8dfd2;
+  --border-subtle: #f0e9de;
+
+  /* Module identity colors — soft pastels */
+  --mod-feeds: #7bb5a3;
+  --mod-sleep: #9b8ec4;
+  --mod-growth: #e09572;
+  --mod-diaper: #6ba8d4;
+
+  --font-theme-display: 'Quicksand', ui-sans-serif, system-ui, sans-serif;
+  --font-theme-body: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Lullaby Dark ─────────────────────────────────────────────── */
+
+.theme-lullaby.dark {
+  --bg-primary: #1a2332;
+  --bg-card: #1e2a3d;
+  --bg-surface: #243348;
+  --bg-hover: #2a3a52;
+  --text-primary: #d4dde8;
+  --text-heading: #eaf0f6;
+  --text-muted: #8899ad;
+  --text-subtle: #526478;
+  --accent: #f0b35e;
+  --accent-dim: #d99e48;
+  --accent-secondary: #88ccb4;
+  --accent-glow: rgba(240, 179, 94, 0.3);
+  --border-color: #2a3a52;
+  --border-subtle: #324560;
+
+  --mod-feeds: #88ccb4;
+  --mod-sleep: #b0a4d8;
+  --mod-growth: #eeaa88;
+  --mod-diaper: #80bbe6;
+}
+
+/* ── Background Pattern: Soft dots ───────────────────────────── */
+
+.theme-lullaby .bg-topo {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(139, 126, 110, 0.06) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+}
+
+.theme-lullaby.dark .bg-topo {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(136, 153, 173, 0.08) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+}

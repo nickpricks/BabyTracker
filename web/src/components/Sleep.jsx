@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getSleep, logSleep } from "../api";
 
 const SLEEP_TYPES = ["Nap", "Night"];
@@ -19,7 +19,6 @@ export default function Sleep() {
   const [error, setError] = useState("");
   const [recentSleep, setRecentSleep] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [fetchError, setFetchError] = useState("");
 
   const fetchSleep = async () => {
@@ -44,8 +43,8 @@ export default function Sleep() {
     try {
       await logSleep({
         date,
-        start_time: `${date}T${startTime}:00`,
-        end_time: endTime ? `${date}T${endTime}:00` : undefined,
+        start_time: `${date}T${startTime}:00Z`,
+        end_time: endTime ? `${date}T${endTime}:00Z` : undefined,
         type: sleepType,
         quality,
         notes,
@@ -67,127 +66,134 @@ export default function Sleep() {
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: "0 auto" }}>
-      <h2>Log Sleep</h2>
-      <div
-        style={{
-          background: "#f8f8f8",
-          padding: 20,
-          borderRadius: 8,
-          marginBottom: 24,
-        }}
-      >
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Sleep Type</b>
-              <select
-                value={sleepType}
-                onChange={(e) => setSleepType(e.target.value)}
-                style={{ marginLeft: 8 }}
-                required
-              >
-                <option value="">Select type...</option>
-                {SLEEP_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </label>
+    <div className="space-y-6 animate-slide-up">
+      {/* Form Card */}
+      <div className="card">
+        <div className="flex items-center gap-3 mb-5">
+          <span className="w-10 h-10 rounded-xl bg-mod-sleep/15 flex items-center justify-center text-xl">
+            😴
+          </span>
+          <h2 className="font-display text-xl font-bold text-fg-heading">
+            Log Sleep
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-fg-muted">Sleep Type</label>
+            <select
+              value={sleepType}
+              onChange={(e) => setSleepType(e.target.value)}
+              className="input-field"
+              required
+            >
+              <option value="">Select type...</option>
+              {SLEEP_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Date</b>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                style={{ marginLeft: 8 }}
-                required
-              />
-            </label>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-fg-muted">Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="input-field"
+              required
+            />
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Start Time</b>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-fg-muted">Start Time</label>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                style={{ marginLeft: 8 }}
+                className="input-field"
                 required
               />
-            </label>
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>End Time (optional)</b>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-fg-muted">End Time (optional)</label>
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                style={{ marginLeft: 8 }}
+                className="input-field"
               />
-            </label>
+            </div>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Quality</b>
-              <select
-                value={quality}
-                onChange={(e) => setQuality(e.target.value)}
-                style={{ marginLeft: 8 }}
-              >
-                <option value="">Select quality...</option>
-                {QUALITY_OPTIONS.map((q) => (
-                  <option key={q} value={q}>
-                    {q}
-                  </option>
-                ))}
-              </select>
-            </label>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-fg-muted">Quality</label>
+            <select
+              value={quality}
+              onChange={(e) => setQuality(e.target.value)}
+              className="input-field"
+            >
+              <option value="">Select quality...</option>
+              {QUALITY_OPTIONS.map((q) => (
+                <option key={q} value={q}>{q}</option>
+              ))}
+            </select>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label>
-              <b>Notes</b>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                style={{ marginLeft: 8, width: "80%", minHeight: 48 }}
-                placeholder="Sleep observations..."
-              />
-            </label>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-fg-muted">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="input-field min-h-[60px] resize-y"
+              placeholder="Sleep observations..."
+            />
           </div>
-          <button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Log Sleep"}
-          </button>
+
+          <div className="pt-2">
+            <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-50">
+              {loading ? "Saving..." : "Log Sleep"}
+            </button>
+          </div>
+
           {feedback && (
-            <div style={{ color: "green", marginTop: 8 }}>{feedback}</div>
+            <p className="text-sm text-mod-sleep font-medium animate-fade-in">{feedback}</p>
           )}
-          {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
+          {error && (
+            <p className="text-sm text-red-500 font-medium animate-fade-in">{error}</p>
+          )}
         </form>
       </div>
-      <hr />
-      <div style={{ marginTop: 24 }}>
-        <h3>Recent Sleep</h3>
-        <div style={{ background: "#f8f8f8", padding: 16, borderRadius: 8 }}>
-          {fetchError ? (
-            <p style={{ color: "red" }}>{fetchError}</p>
-          ) : recentSleep.length === 0 ? (
-            <p style={{ color: "#666" }}>No sleep entries logged yet.</p>
-          ) : (
-            <ul style={{ margin: 0, padding: "0 0 0 20px" }}>
-              {recentSleep.map((entry) => (
-                <li key={entry.id} style={{ marginBottom: 4 }}>
-                  <b>{entry.type}</b> on {entry.date}
-                  {entry.quality && ` - Quality: ${entry.quality}`}
-                  {entry.notes && ` - ${entry.notes}`}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+
+      {/* Recent Sleep */}
+      <div className="card">
+        <h3 className="font-display text-lg font-bold text-fg-heading mb-4">
+          Recent Sleep
+        </h3>
+        {fetchError ? (
+          <p className="text-sm text-red-500">{fetchError}</p>
+        ) : recentSleep.length === 0 ? (
+          <p className="text-sm text-fg-muted">No sleep entries logged yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {recentSleep.map((entry) => (
+              <li
+                key={entry.id}
+                className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
+              >
+                <span className="text-sm font-semibold text-fg">{entry.type}</span>
+                <span className="text-xs text-fg-muted">{entry.date}</span>
+                {entry.quality && (
+                  <span className="text-xs text-mod-sleep font-medium">{entry.quality}</span>
+                )}
+                {entry.notes && (
+                  <span className="text-xs text-fg-subtle truncate">{entry.notes}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

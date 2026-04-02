@@ -1,6 +1,6 @@
 # 👶 Baby Tracker
 
-A minimalist yet mighty multi-platform app to track your baby's day-to-day growth 📈, nourishment 🍼, sleep patterns 😴, and the noble chronicles of 🚽 Susu-Poty 🧻. Built in Go with a [Fyne](https://fyne.io) desktop GUI, a React web app, and a REST API — all sharing the same backend logic.
+A minimalist yet mighty multi-platform app to track your baby's day-to-day growth 📈, nourishment 🍼, sleep patterns 😴, and the noble chronicles of 🚽 Susu-Poty 🧻. Built in Go with a [Fyne](https://fyne.io) desktop GUI, a React web app with Tailwind CSS theming, and a REST API — all sharing the same backend logic.
 
 Whether you're a caregiver, parent, or curious builder, this project aims to balance usability with technical learning—while keeping things fun and purpose-driven 🎯.
 
@@ -8,8 +8,8 @@ Whether you're a caregiver, parent, or curious builder, this project aims to bal
 
 ## 🛠️ Prerequisites
 
-- [Go](https://go.dev/dl/) (v1.22 or later)
-- [Node.js](https://nodejs.org/) (v18 or later) — for the web frontend
+- [Go](https://go.dev/dl/) (v1.24 or later)
+- [Bun](https://bun.sh/) — for the web frontend (not npm/yarn)
 - [Make](https://www.gnu.org/software/make/) — included on macOS/Linux; on Windows use `choco install make` or run commands manually
 - [Fyne dependencies](https://docs.fyne.io/started/) — C compiler and system graphics libs (see Fyne docs for your OS)
 
@@ -54,15 +54,17 @@ make env
 | `PORT` | `8080` | API server port |
 | `DATA_DIR` | `~/.babytracker` | Absolute path for JSON data storage |
 | `APP_TITLE` | `Baby Tracker` | Desktop window title |
+| `API_KEY` | *(empty)* | Bearer token for API auth (empty = no auth) |
+| `CORS_ORIGIN` | `http://localhost:3000` | Allowed CORS origin |
 
 ### React Web App (`web/.env`)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3000` | React dev server port |
-| `REACT_APP_API_BASE` | `http://localhost:8080/api` | API URL the web app connects to |
+| `VITE_API_BASE` | `http://localhost:8080/api` | API URL the web app connects to |
+| `VITE_API_KEY` | *(empty)* | API key sent as Bearer token |
 
-The Makefile automatically loads `.env` from the project root, so `make api` and `make desktop` pick up your values. The React dev server reads `web/.env` natively (CRA built-in).
+The Makefile automatically loads `.env` from the project root, so `make api` and `make desktop` pick up your values. Vite reads `web/.env` natively.
 
 Config is also available in Go code via `internal/config`:
 
@@ -76,7 +78,7 @@ fmt.Println(cfg.DataDir)  // "/Users/you/.babytracker"
 
 ## 📋 Makefile Commands
 
-Run `make` or `make help` to see all available commands:
+Run `make` or `make help` to see all available commands. Full reference: [docs/make.md](docs/make.md)
 
 ### Development (run)
 
@@ -85,7 +87,7 @@ Run `make` or `make help` to see all available commands:
 | `make dev` | Run API server + web dev server concurrently |
 | `make api` | Run only the Go API server |
 | `make desktop` | Run the Fyne desktop app |
-| `make web` | Run the React dev server (requires API running) |
+| `make web` | Run the Vite dev server (requires API running) |
 
 ### Build
 
@@ -94,35 +96,36 @@ Run `make` or `make help` to see all available commands:
 | `make build` | Build everything (Go binaries + web production build) |
 | `make build-api` | Build the API server binary to `bin/api` |
 | `make build-desktop` | Build the desktop app binary to `bin/desktop` |
-| `make build-web` | Build the React app for production to `web/build/` |
+| `make build-web` | Build the web app for production to `web/build/` |
 
 ### Test
 
 | Command | Description |
 |---------|-------------|
 | `make test` | Run all Go tests |
-| `make test-v` | Run all Go tests in verbose mode |
 | `make test-cover` | Run Go tests with coverage report |
-| `make test-web` | Run React tests |
+| `make test-web` | Run web tests (vitest) |
+| `make test-all` | Run all tests (Go + coverage + web), stops on first failure |
 
-### Lint & Tidy
+### Lint, Tidy & Update
 
 | Command | Description |
 |---------|-------------|
 | `make lint` | Vet Go code (`go vet`) |
-| `make lint-web` | Lint React code (eslint) |
+| `make lint-web` | Lint web code (`bun run lint`) |
 | `make tidy` | Run `go mod tidy` |
+| `make update` | Update all Go deps to latest minor/patch |
 
-### Setup & Clean
+### Setup, Clean & Bench
 
 | Command | Description |
 |---------|-------------|
 | `make setup` | Full project setup (env files + Go tidy + web deps) |
 | `make env` | Create `.env` files from examples (won't overwrite) |
-| `make install-web` | Install web dependencies (`npm install`) |
+| `make install-web` | Install web dependencies (`bun install`) |
 | `make clean` | Remove all build artifacts (`bin/` + `web/build/`) |
-| `make clean-bin` | Remove Go binaries only |
-| `make clean-web` | Remove web build output only |
+| `make bench` | Generate 10k entries per module for stress testing (backs up data first) |
+| `make bench-restore` | Restore data from bench backup |
 
 ---
 
@@ -131,18 +134,22 @@ Run `make` or `make help` to see all available commands:
 ```
 BabyTracker/
 ├── cmd/
+│   ├── api/main.go            # HTTP API server entry point
 │   ├── desktop/main.go        # Fyne desktop entry point
-│   └── api/main.go            # HTTP API server entry point
+│   └── bench/main.go          # Bench data generator (10k entries)
 ├── internal/
 │   ├── models/                # Shared data models (feed, sleep, growth, diaper)
 │   ├── storage/               # JSON file persistence (~/.babytracker/)
 │   ├── config/                # Environment-based configuration
 │   ├── api/                   # HTTP handlers & gorilla/mux router
 │   └── desktop/               # Fyne UI (app, layout, tabs)
-├── web/                       # React SPA + PWA
-│   ├── public/                #   HTML, manifest, icons
-│   └── src/                   #   Components, API client, routing
-├── docs/                      # 📖 Project documentation
+├── web/                       # React SPA + PWA (Vite + Tailwind v4)
+│   └── src/
+│       ├── components/        #   Dashboard, Feeds, Sleep, Growth, SusuPoty
+│       ├── themes/            #   Lullaby, Nursery_OS, Midnight Feed
+│       ├── themes.js          #   Theme definitions + useTheme hook
+│       └── index.css          #   Tailwind @theme token mapping
+├── docs/                      # Project documentation
 ├── Makefile                   # Build, run, test commands
 └── go.mod
 ```
@@ -158,8 +165,10 @@ Detailed technical documentation lives in the [`docs/`](docs/) folder:
 | [**TLDR.md**](docs/TLDR.md) | The entire project in headline form — scan in 60 seconds |
 | [**Manual.md**](docs/Manual.md) | Full technical manual — architecture deep dive, module reference, roadmap |
 | [**man.md**](docs/man.md) | Function & file reference — every file, every function described |
-| [**man-ext.md**](docs/man-ext.md) | Third-party dependency guide — Fyne pain, gorilla/mux gotchas, React/CRA |
+| [**man-ext.md**](docs/man-ext.md) | Third-party dependency guide — Fyne pain, gorilla/mux gotchas |
+| [**make.md**](docs/make.md) | Makefile reference — every target with usage and examples |
 | [**CLAUDE.md**](docs/CLAUDE.md) | Claude Code context — commands, conventions, known gotchas |
+| [**Security-Review.md**](docs/Security-Review.md) | Security audit — 23 findings with severity ratings and fix status |
 
 ---
 
@@ -186,6 +195,20 @@ Detailed technical documentation lives in the [`docs/`](docs/) folder:
 - **Shared**: All platforms use the same models and storage format
 
 For the full architecture deep dive, see [docs/Manual.md](docs/Manual.md).
+
+---
+
+## 🎨 Themes
+
+The web app ships with three themes, built on the same CSS variable architecture as Floor-Tracker for future unification:
+
+| Theme | Modes | Aesthetic |
+|-------|-------|-----------|
+| **Lullaby** (default) | Light + Dark | Warm cream nursery / soft blue night mode |
+| **Nursery_OS** | Dark only | Cyberpunk baby monitor with neon glows |
+| **Midnight Feed** | Dark only | Ultra-dim amber for 3am use |
+
+Each tracking module has its own color identity (sage for feeds, lavender for sleep, coral for growth, blue for diapers). Theme selection persists in localStorage.
 
 ---
 
@@ -224,11 +247,16 @@ For app store distribution, [Capacitor](https://capacitorjs.com/) can wrap the b
 |---------|--------|----------|
 | `v0.1` | ✅ Done | Initial Fyne window with basic UI |
 | `v0.2` | ✅ Done | Modular architecture, Feed Tracker with persistence |
-| `v0.3` | ✅ Done | All 4 modules complete, standard Go layout, API for all features, React connected to API, PWA, tests |
-| `v0.3.1` | 🔜 Next | Security hardening: API auth, CORS lockdown, storage mutex, file permissions ([details](docs/Security-Review.md)) |
-| `v0.4` | 🔜 Planned | History views with charts, pattern analytics |
-| `v0.5` | 🔜 Planned | Reminders, notifications |
-| `v1.0` | ⏳ Future | Multi-profile support, exportable reports, dark mode |
+| `v0.3` | ✅ Done | All 4 modules, standard Go layout, API, React SPA, PWA, tests |
+| `v0.3.1` | ✅ Done | Security hardening: API auth, CORS lockdown, storage mutex, file permissions ([details](docs/Security-Review.md)) |
+| `v0.3.2` | 🔜 Next | Test coverage push: API get-by-ID handlers, storage init paths, web edge cases |
+| `v0.3.2.5` | 🚨 Critical | Desktop recent activity: load and display entries in all 4 tabs (currently placeholder) |
+| `v0.3.2.5.5` | 🚨 Critical | API time parsing: accept timezone-less timestamps (custom unmarshaler), remove `Z` workaround from web |
+| `v0.4` | 🔜 Next | Tailwind redesign, dashboard, theme system, bench tooling |
+| `v0.4.5` | 🔜 Planned | Desktop test coverage: `fyne.test` headless tests, extract UI logic into testable functions |
+| `v0.5` | 🔜 Planned | History views with charts, pattern analytics |
+| `v0.6` | 🔜 Planned | Reminders, notifications |
+| `v1.0` | ⏳ Future | Multi-profile support, exportable reports |
 | `v2.0+` | 🚀 Vision | Adult Mode: rebranded as Body Soul and Mind Tracker |
 
 ---
@@ -254,6 +282,8 @@ With a little 🤏🧸🐭 little help from
 - [Gemini](https://gemini.google.com/)
 - [Grok](https://grok.com/)
 - [Dia](https://www.diabrowser.com)
+
+No [ChatGPT](https://chatgpt.com)'s were harmed building this. 🫡
 
 ---
 *👣 "In the grand chronicles of parenthood, every logged feed and tracked nap becomes a story of love, care, and growth."* ✨

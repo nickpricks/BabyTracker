@@ -45,21 +45,29 @@ func SetupRouter(cfg *config.Config) http.Handler {
 	r.HandleFunc("/api/feeds", handleListFeeds).Methods("GET")
 	r.HandleFunc("/api/feeds", handleLogFeed).Methods("POST")
 	r.HandleFunc("/api/feeds/{id:[0-9]+}", handleGetFeed).Methods("GET")
+	r.HandleFunc("/api/feeds/{id:[0-9]+}", handleUpdateFeed).Methods("PUT")
+	r.HandleFunc("/api/feeds/{id:[0-9]+}", handleDeleteFeed).Methods("DELETE")
 
 	// Sleep endpoints
 	r.HandleFunc("/api/sleep", handleListSleep).Methods("GET")
 	r.HandleFunc("/api/sleep", handleLogSleep).Methods("POST")
 	r.HandleFunc("/api/sleep/{id:[0-9]+}", handleGetSleep).Methods("GET")
+	r.HandleFunc("/api/sleep/{id:[0-9]+}", handleUpdateSleep).Methods("PUT")
+	r.HandleFunc("/api/sleep/{id:[0-9]+}", handleDeleteSleep).Methods("DELETE")
 
 	// Growth endpoints
 	r.HandleFunc("/api/growth", handleListGrowth).Methods("GET")
 	r.HandleFunc("/api/growth", handleLogGrowth).Methods("POST")
 	r.HandleFunc("/api/growth/{id:[0-9]+}", handleGetGrowth).Methods("GET")
+	r.HandleFunc("/api/growth/{id:[0-9]+}", handleUpdateGrowth).Methods("PUT")
+	r.HandleFunc("/api/growth/{id:[0-9]+}", handleDeleteGrowth).Methods("DELETE")
 
 	// Diaper endpoints
 	r.HandleFunc("/api/diapers", handleListDiapers).Methods("GET")
 	r.HandleFunc("/api/diapers", handleLogDiaper).Methods("POST")
 	r.HandleFunc("/api/diapers/{id:[0-9]+}", handleGetDiaper).Methods("GET")
+	r.HandleFunc("/api/diapers/{id:[0-9]+}", handleUpdateDiaper).Methods("PUT")
+	r.HandleFunc("/api/diapers/{id:[0-9]+}", handleDeleteDiaper).Methods("DELETE")
 
 	// CORS wraps the entire router so OPTIONS preflight is handled before
 	// mux rejects it with 405 (routes only register GET/POST).
@@ -77,7 +85,7 @@ func corsHandler(corsOrigin string, next http.Handler) http.Handler {
 		}
 		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
 		if req.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return

@@ -6,6 +6,7 @@
 
 ## System Overview
 - Multi-platform baby activity tracker (Desktop + Web + PWA)
+- Stack: Go 1.24, Fyne v2.6.1, React 18, Vite, Tailwind CSS v4, bun
 - Shared Go core, four tracking domains
 
 ## Architecture
@@ -28,7 +29,7 @@
 
 ## API Layer
 - GET/POST per resource, GET by ID
-- CORS wildcard middleware
+- CORS configurable-origin middleware
 - Decode -> Validate -> Log -> Save -> Respond
 
 ## Modules
@@ -38,13 +39,14 @@
 - **Diapers**: Wet / Dirty / Mixed
 
 ## Web App
-- CRA + react-router-dom
+- Vite + React 18 + Tailwind CSS v4, managed with bun
 - `api.js` wraps fetch with `apiGet`/`apiPost`
+- Dashboard with 3 switchable themes (v0.4)
 - PWA: manifest + service worker + icons
 
 ## Config
-- Root `.env` for Go (PORT, DATA_DIR)
-- `web/.env` for React (REACT_APP_API_BASE)
+- Root `.env` for Go (PORT, DATA_DIR, API_KEY, CORS_ORIGIN)
+- `web/.env` for Vite (VITE_API_BASE, VITE_API_KEY)
 - `make env` creates from examples
 
 ## Build
@@ -55,22 +57,8 @@
 
 ## Tests
 - Go: model + storage + API handler tests
-- Web: test runner configured, no cases yet
+- Web: 43 vitest tests (api, components, ErrorBoundary, routing)
 
 ## Roadmap
 
-- v0.3.1: Security hardening -- auth, CORS, storage locking, file permissions (see [Security-Review.md](Security-Review.md))
-- v0.4: Charts & analytics
-- v0.5: Smart alerts & reminders
-- v0.6: Export (CSV/PDF)
-- v1.0: Multi-profile, dark mode
-- v1.5: Cloud sync
-- v2.0: Native mobile, voice integration
-- v3.0: "Body Soul and Mind Tracker" -- generalized health
-
-## Known Gaps
-- No DELETE/PUT endpoints
-- No web tests
-- No CI/CD
-- Placeholder PWA icons
-- Duplicate layout code
+See **[ROADMAP.md](ROADMAP.md)** for the full roadmap and known gaps.

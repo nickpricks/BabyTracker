@@ -26,11 +26,11 @@ The Fyne desktop application entry point.
 
 Centralized environment-based configuration.
 
-- **`Config` struct** -- Holds `APIPort` (string), `DataDir` (string), `AppTitle` (string). All fields populated from environment variables with fallback defaults.
+- **`Config` struct** -- Holds `APIPort` (string), `DataDir` (string), `AppTitle` (string), `APIKey` (string), `CORSOrigin` (string). All fields populated from environment variables with fallback defaults.
 
-- **Constants**: `DefaultAPIPort = "8080"`, `DefaultDataDir = ".babytracker"`, `DefaultAppTitle = "Baby Tracker"`
+- **Constants**: `DefaultAPIPort = "8080"`, `DefaultDataDir = ".babytracker"`, `DefaultAppTitle = "Baby Tracker"`, `DefaultCORSOrigin = "http://localhost:3000"`
 
-- **`Load() (*Config, error)`** -- Reads `PORT`, `DATA_DIR`, and `APP_TITLE` from environment variables. For `DATA_DIR`, falls back to `$HOME/.babytracker` if not set. Returns error only if `os.UserHomeDir()` fails.
+- **`Load() (*Config, error)`** -- Reads `PORT`, `DATA_DIR`, `APP_TITLE`, `API_KEY`, and `CORS_ORIGIN` from environment variables. For `DATA_DIR`, falls back to `$HOME/.babytracker` if not set. Returns error only if `os.UserHomeDir()` fails.
 
 - **`envOr(key, fallback string) string`** -- Helper that returns the environment variable value or the fallback. Unexported.
 
@@ -132,9 +132,11 @@ Generic JSON file persistence engine.
 
 ### `internal/api/router.go`
 
-HTTP route registration and middleware.
+HTTP route registration, middleware, and CORS handling.
 
-- **`SetupRouter() *mux.Router`** -- Creates a gorilla/mux router, attaches CORS method middleware, adds a custom CORS middleware that sets `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Headers: Content-Type`, and `Access-Control-Allow-Methods: GET,POST,OPTIONS`. Registers all 12 endpoints (3 per module: list, create, get-by-id) and returns the router.
+- **`SetupRouter(cfg *config.Config) http.Handler`** -- Creates a gorilla/mux router, attaches a 1MB request body size limit middleware, optionally adds Bearer-token auth middleware (skipped if `cfg.APIKey` is empty; OPTIONS requests bypass auth). Registers all 12 endpoints (3 per module: list, create, get-by-id). Returns the router wrapped in `corsHandler()`, which means the return type is `http.Handler` (not `*mux.Router`), because CORS must intercept OPTIONS preflight before mux rejects it with 405.
+
+- **`corsHandler(corsOrigin string, next http.Handler) http.Handler`** -- Wraps a handler with CORS headers. Sets `Access-Control-Allow-Origin` to the configured origin (from `CORS_ORIGIN` env var, default `http://localhost:3000`), `Access-Control-Allow-Headers: Content-Type, Authorization`, and `Access-Control-Allow-Methods: GET,POST,OPTIONS`. If the configured origin is localhost, accepts any `http://localhost:*` origin for dev convenience. Returns 200 immediately for OPTIONS preflight requests. Unexported.
 
 ### `internal/api/handlers.go`
 
@@ -236,23 +238,37 @@ Fyne diaper tracking form.
 
 ### `web/src/index.jsx`
 
-React entry point. Renders `<App />` inside `<StrictMode>`, mounts to `#root`, and registers the service worker for PWA support.
+React entry point. Renders `<App />` inside `<StrictMode>`, mounts to `#root` via `createRoot`.
 
 ### `web/src/App.jsx`
 
-Root component. Wraps `<MainLayout>` and `<AppRoutes>` inside a `<BrowserRouter>`.
+Root component. Initializes the theme system via `useTheme()`, wraps the app in `<BrowserRouter>` -> `<MainLayout theme={theme}>` -> `<ErrorBoundary>` -> `<AppRoutes>`.
 
 ### `web/src/Main.jsx`
 
-- **`MainLayout({ children })`** -- Layout component with a header ("Baby Tracker"), navigation links (Feeds, Sleep, Growth, Susu-Poty) using React Router `<Link>`, and a `<main>` area. Max-width 800px, centered.
+- **`ThemeSwitcher({ theme })`** -- Theme and color mode selector. Renders a `<select>` for theme choice (Lullaby, Nursery_OS, Midnight Feed) and light/dark/system toggle buttons (hidden for dark-only themes). Unexported.
+
+- **`MainLayout({ children, theme })`** -- Layout component with a sticky header ("Baby Tracker" + ThemeSwitcher), a `<main>` content area (max-width 3xl, centered), and a fixed bottom navigation bar. Navigation uses `NavLink` with active-state highlighting for Home, Feeds, Sleep, Growth, and Diapers. Styled with Tailwind CSS utility classes and theme-aware CSS custom properties.
 
 ### `web/src/Routes.jsx`
 
-- **`AppRoutes()`** -- Defines routes: `/` redirects to `/feeds`, four feature routes, and a `*` catch-all 404.
+- **`AppRoutes()`** -- Defines routes: `/` renders `<Dashboard />`, four feature routes (`/feeds`, `/sleep`, `/growth`, `/susupoty`), and a `*` catch-all 404.
+
+### `web/src/themes.js`
+
+Theme definitions and state management.
+
+- **`THEMES`** -- Object defining three themes: `lullaby` (Nursery family, light+dark), `nursery-os` (Cyberpunk family, dark-only), `midnight-feed` (Nursery family, dark-only). Each theme has `id`, `name`, `family`, `darkOnly`, `cssClass`, and `previewColors`.
+
+- **`getStoredTheme()`** / **`getStoredColorMode()`** -- Read persisted theme/mode from localStorage (defaults: "lullaby", "system").
+
+- **`applyTheme(themeId, colorMode)`** -- Applies the theme CSS class and dark mode to `document.documentElement`, persists choices to localStorage.
+
+- **`useTheme()`** -- React hook that manages theme and color mode state, applies on mount and change, and listens for system color-scheme changes. Returns `{ themeId, setThemeId, colorMode, setColorMode }`.
 
 ### `web/src/config.js`
 
-- **`API_BASE`** -- Exported constant. Uses `REACT_APP_API_BASE` env var or defaults to `http://localhost:8080/api`.
+- **`API_BASE`** -- Exported constant. Uses `VITE_API_BASE` env var (via `import.meta.env`) or defaults to `http://localhost:8080/api`.
 
 ### `web/src/api.js`
 
@@ -267,37 +283,41 @@ HTTP client layer for the React app.
 - **`getGrowth()`** / **`logGrowth(entry)`** -- Growth API calls.
 - **`getDiapers()`** / **`logDiaper(entry)`** -- Diaper API calls.
 
-### `web/src/components/index.js`
+### `web/src/components/Dashboard.jsx`
+
+- **`SummaryCard({ icon, title, color, linkTo, children })`** -- Reusable card with icon, title, and a "+" link to the module's logging page. Unexported.
+
+- **`MiniList({ items, empty })`** -- Renders a list of recent entries or an empty-state message. Unexported.
+
+- **`Dashboard()`** -- Home page component. Fetches the last 5 entries from each module (3 for growth) on mount via `Promise.all`. Displays a greeting, a quick-entry strip with shortcut buttons for each module, and a 2-column summary grid of `SummaryCard` components showing recent feeds, sleep, growth measurements, and diaper changes. Shows a loading spinner while fetching.
+
+### `web/src/components/ErrorBoundary.jsx`
+
+- **`ErrorBoundary`** -- React error boundary (class component). Catches rendering errors in child components and displays a fallback UI instead of crashing the whole app.
+
+### `web/src/components/index.jsx`
 
 Barrel export file. Re-exports `Feeds`, `Growth`, `Sleep`, and `SusuPoty` as named exports.
 
-### `web/src/components/Feeds.js`
+### `web/src/components/Feeds.jsx`
 
 - **`Feeds()`** -- Complete feed logging component. Manages form state via `useState` (feedType, date, time, quantity, notes, feedback, error, recentFeeds, loading). Fetches recent feeds on mount via `useEffect`. Submit handler calls `logFeed()`, shows feedback for 3 seconds, and resets the form. "Quick Bottle" and "Quick Breast" buttons pre-fill type and timestamp. Displays last 10 feeds in reverse chronological order.
 
-### `web/src/components/Sleep.js`
+### `web/src/components/Sleep.jsx`
 
 - **`Sleep()`** -- Sleep logging component. Same pattern as Feeds with fields for type (Nap/Night), quality (Good/Fair/Poor), date, start time, end time, notes. Computes duration client-side. Quick Nap / Quick Night buttons.
 
-### `web/src/components/Growth.js`
+### `web/src/components/Growth.jsx`
 
 - **`Growth()`** -- Growth measurement component. Fields for date, weight, height, head circumference, notes. No quick action buttons.
 
-### `web/src/components/SusuPoty.js`
+### `web/src/components/SusuPoty.jsx`
 
 - **`SusuPoty()`** -- Diaper logging component. Type select (Wet/Dirty/Mixed), date, time, notes. Quick Wet / Quick Dirty buttons.
 
-### `web/src/serviceWorkerRegistration.js`
+### PWA Support
 
-PWA service worker registration based on CRA's default pattern.
-
-- **`register(config)`** -- Registers a service worker on page load if the browser supports it and the origin matches. Handles update detection and success callbacks.
-
-- **`registerValidSW(swUrl, config)`** -- Registers the SW and monitors for installation state changes. Logs "New content available" on updates. Unexported.
-
-- **`checkValidServiceWorker(swUrl, config)`** -- Validates the SW file exists (not 404) and is JavaScript. Unregisters stale SWs on localhost. Unexported.
-
-- **`unregister()`** -- Unregisters the active service worker. Exported for use if PWA behavior needs to be disabled.
+PWA functionality (service worker, manifest) is handled by `vite-plugin-pwa` in the Vite config. The old CRA-based `serviceWorkerRegistration.js` has been removed.
 
 ---
 
@@ -305,23 +325,23 @@ PWA service worker registration based on CRA's default pattern.
 
 ### `Makefile`
 
-99-line build system with phony targets for dev, build, test, lint, setup, and clean. Loads `.env` via `-include` and exports all variables. Default target is `help`, which greps for `##` comments.
+Build system with phony targets for dev, build, test, lint, setup, bench, and clean. Loads `.env` via `-include` and exports all variables. Default target is `help`, which greps for `##` comments. Includes `bench` (generates 10k entries per module, backs up existing data) and `bench-restore` (restores from bench backup) targets for performance testing.
 
 ### `go.mod`
 
-Go module `babytracker`, Go 1.24.4. Direct dependencies: `fyne.io/fyne/v2` (v2.6.1), `github.com/gorilla/mux` (v1.8.1).
+Go module `babytracker`, Go 1.26.0. Direct dependencies: `fyne.io/fyne/v2` (v2.7.3), `github.com/gorilla/mux` (v1.8.1).
 
 ### `.env.example`
 
-Template for root environment file. Documents PORT, DATA_DIR, APP_TITLE, and notes about CRA's separate PORT.
+Template for root environment file. Documents PORT, DATA_DIR, APP_TITLE, API_KEY, and CORS_ORIGIN.
 
 ### `web/.env.example`
 
-Template for web environment file. Documents REACT_APP_API_BASE.
+Template for web environment file. Documents VITE_API_BASE and VITE_API_KEY.
 
 ### `web/package.json`
 
-CRA-based React 18 project. Scripts: start, build, test, eject, lint. Dependencies: react, react-dom, react-router-dom. Dev dependencies: eslint, eslint-plugin-react, react-scripts. Includes `eslintConfig` extending `react-app`.
+Vite-based React 18 project. Scripts: dev, build, preview, test (vitest run), test:watch (vitest), lint. Dependencies: react, react-dom, react-router-dom. Dev dependencies: @tailwindcss/vite, @vitejs/plugin-react, tailwindcss v4, vite v8, vitest, vite-plugin-pwa, @testing-library/{jest-dom,react,user-event}, eslint, eslint-plugin-react, jsdom.
 
 ### `web/public/manifest.json`
 

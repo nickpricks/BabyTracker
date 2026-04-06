@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getFeeds, logFeed } from "../api";
+import { useLoadMore } from "../useLoadMore";
 
 const FEED_TYPES = [
   "Bottle",
@@ -21,23 +22,13 @@ export default function Feeds() {
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
-  const [recentFeeds, setRecentFeeds] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState("");
 
-  const fetchFeeds = async () => {
-    try {
-      setFetchError("");
-      const feeds = await getFeeds();
-      setRecentFeeds(feeds.slice(-10).reverse());
-    } catch {
-      setFetchError("Could not load feeds. Is the API server running?");
-    }
-  };
+  const { items: recentFeeds, loading: listLoading, error: fetchError, loadMore, hasMore, refresh, sentinelRef } = useLoadMore(getFeeds);
 
   useEffect(() => {
-    fetchFeeds();
-  }, []);
+    refresh();
+  }, [refresh]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,7 +39,7 @@ export default function Feeds() {
       await logFeed({
         type: feedType,
         date: date,
-        time: `${date}T${time}Z`,
+        time: `${date}T${time}`,
         quantity: quantity ? parseFloat(quantity) : 0,
         notes: notes,
       });
@@ -58,7 +49,7 @@ export default function Feeds() {
       setTime(getNow());
       setQuantity("");
       setNotes("");
-      fetchFeeds();
+      refresh();
       setTimeout(() => setFeedback(""), 3000);
     } catch (err) {
       setError(err.message);
@@ -186,23 +177,26 @@ export default function Feeds() {
         ) : recentFeeds.length === 0 ? (
           <p className="text-sm text-fg-muted">No feeds logged yet.</p>
         ) : (
-          <ul className="space-y-2">
-            {recentFeeds.map((feed) => (
-              <li
-                key={feed.id}
-                className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
-              >
-                <span className="text-sm font-semibold text-fg">{feed.type}</span>
-                <span className="text-xs text-fg-muted">{feed.date}</span>
-                {feed.quantity > 0 && (
-                  <span className="text-xs text-mod-feeds font-medium">{feed.quantity} ml/oz</span>
-                )}
-                {feed.notes && (
-                  <span className="text-xs text-fg-subtle truncate">{feed.notes}</span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-2">
+              {recentFeeds.map((feed) => (
+                <li
+                  key={feed.id}
+                  className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
+                >
+                  <span className="text-sm font-semibold text-fg">{feed.type}</span>
+                  <span className="text-xs text-fg-muted">{feed.date}</span>
+                  {feed.quantity > 0 && (
+                    <span className="text-xs text-mod-feeds font-medium">{feed.quantity} ml/oz</span>
+                  )}
+                  {feed.notes && (
+                    <span className="text-xs text-fg-subtle truncate">{feed.notes}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {hasMore && <div ref={sentinelRef} className="py-2 text-center text-xs text-fg-muted">{listLoading ? "Loading..." : ""}</div>}
+          </>
         )}
       </div>
     </div>

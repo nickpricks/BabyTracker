@@ -35,7 +35,7 @@ func TestFeedRoundTrip(t *testing.T) {
 
 	feed := &models.FeedEntry{
 		Date:     "2025-06-22",
-		Time:     time.Now(),
+		Time:     models.FlexTime{Time: time.Now()},
 		Type:     models.FeedTypeBottle,
 		Quantity: 120.0,
 		Notes:    "test feed",
@@ -135,7 +135,7 @@ func TestDiaperRoundTrip(t *testing.T) {
 
 	entry := &models.DiaperEntry{
 		Date:  "2025-06-22",
-		Time:  time.Now(),
+		Time:  models.FlexTime{Time: time.Now()},
 		Type:  models.DiaperTypeWet,
 		Notes: "test change",
 	}

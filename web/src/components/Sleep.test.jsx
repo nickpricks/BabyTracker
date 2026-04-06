@@ -17,7 +17,7 @@ beforeEach(() => {
 
 describe("Sleep", () => {
   it("renders the form", () => {
-    getSleep.mockResolvedValue([]);
+    getSleep.mockResolvedValue({ items: [], total: 0 });
     render(<Sleep />);
     expect(screen.getByRole("heading", { name: /log sleep/i })).toBeInTheDocument();
   });
@@ -26,14 +26,15 @@ describe("Sleep", () => {
     getSleep.mockRejectedValue(new Error("fail"));
     render(<Sleep />);
     await waitFor(() => {
-      expect(screen.getByText(/could not load sleep/i)).toBeInTheDocument();
+      expect(screen.getByText("fail")).toBeInTheDocument();
     });
   });
 
   it("shows recent entries on successful load", async () => {
-    getSleep.mockResolvedValue([
-      { id: 1, type: "Nap", date: "2026-01-01", quality: "Good", notes: "" },
-    ]);
+    getSleep.mockResolvedValue({
+      items: [{ id: 1, type: "Nap", date: "2026-01-01", quality: "Good", notes: "" }],
+      total: 1,
+    });
     render(<Sleep />);
     await waitFor(() => {
       expect(screen.getByText("2026-01-01", { exact: false })).toBeInTheDocument();
@@ -42,7 +43,7 @@ describe("Sleep", () => {
 
   it("submits sleep entry", async () => {
     const user = userEvent.setup();
-    getSleep.mockResolvedValue([]);
+    getSleep.mockResolvedValue({ items: [], total: 0 });
     logSleep.mockResolvedValue({ id: 1 });
 
     render(<Sleep />);
@@ -58,7 +59,7 @@ describe("Sleep", () => {
 
   it("shows error on submit failure", async () => {
     const user = userEvent.setup();
-    getSleep.mockResolvedValue([]);
+    getSleep.mockResolvedValue({ items: [], total: 0 });
     logSleep.mockRejectedValue(new Error("date required"));
 
     render(<Sleep />);

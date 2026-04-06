@@ -22,7 +22,7 @@ desktop: ## Run the Fyne desktop app
 	go run ./cmd/desktop
 
 web: ## Run the Vite dev server (requires API running)
-	cd web && bun run vite
+	cd web && bun run vite --port 3005 --host
 
 # --- Build ---
 

@@ -6,7 +6,7 @@
 
 ## Go Dependencies (from `go.mod`)
 
-### Fyne (`fyne.io/fyne/v2` v2.6.1) -- Desktop GUI Framework
+### Fyne (`fyne.io/fyne/v2` v2.7.3) -- Desktop GUI Framework
 
 **What it is**: Fyne is a cross-platform GUI toolkit for Go, built on OpenGL. It provides widgets, layouts, data binding, theming, and application lifecycle management. Think of it as Go's answer to Qt or Electron -- but native, compiled, and without a browser engine.
 
@@ -51,7 +51,7 @@ Fyne requires **system-level graphics dependencies** that are NOT installed by `
 - Fyne's coordinate system uses `float32` (`fyne.NewSize(800, 600)`), not pixels -- it's DPI-independent
 - `SetCloseIntercept` overrides the default close behavior; you MUST call `window.Close()` inside it or the window won't close
 
-**Version note**: v2.6.1 is current as of this project. Fyne v2 has breaking changes from v1 (import path changed from `fyne.io/fyne` to `fyne.io/fyne/v2`).
+**Version note**: v2.7.3 is current as of this project (master branch). Fyne v2 has breaking changes from v1 (import path changed from `fyne.io/fyne` to `fyne.io/fyne/v2`).
 
 ---
 
@@ -148,31 +148,45 @@ These are pulled in transitively by Fyne. You don't import them directly, but th
 
 **Why `Link` instead of `<a href>`**: Using `<a>` causes a full page reload, killing React's SPA state and causing a flash. `<Link>` does client-side navigation, preserving state and enabling instant transitions. This was a bug fix in v0.3.
 
-### React Scripts (`react-scripts` 5.0.1) -- Build Toolchain
+### Vite (`vite` ^8.0.3) -- Build Toolchain
 
-**What it is**: Create React App's abstraction layer over webpack, Babel, ESLint, and Jest. Provides `start`, `build`, `test`, and `eject` scripts without requiring manual configuration.
+**What it is**: A fast, modern build tool that uses native ES modules for development and Rollup for production builds. Replaces Create React App (CRA) and webpack.
 
-**Hidden complexity**: Under the hood, react-scripts manages:
-- Webpack 5 bundling with code splitting
-- Babel transpilation (JSX -> JS, modern syntax -> browser-compatible)
-- ESLint integration
-- Jest test runner
-- PostCSS / CSS modules support
-- Development server with hot module replacement (HMR)
-- Production optimization (minification, tree shaking, chunk hashing)
-- Service worker generation (via Workbox)
+**Why we migrated**: CRA is unmaintained and uses webpack, which has slow cold starts. Vite provides near-instant dev server startup via native ESM and faster HMR.
 
-**CRA gotchas**:
-- `eslintConfig` must be in `package.json` for JSX parsing to work (we extend `react-app`)
-- Environment variables must be prefixed with `REACT_APP_` to be exposed to the browser
-- CRA reads `web/.env` natively; the root `.env` is only for Go targets
-- `react-scripts` 5.x has known peer dependency warnings -- these are cosmetic
+**What it provides**:
+- Native ESM dev server with instant HMR (no bundling during development)
+- Rollup-based production builds (minification, tree shaking, chunk hashing)
+- `@vitejs/plugin-react` for JSX/React Fast Refresh
+- `@tailwindcss/vite` plugin for Tailwind CSS v4 integration
+- `vite-plugin-pwa` for service worker / PWA manifest generation
+- Environment variables via `import.meta.env` (prefixed with `VITE_`)
+
+**Vite gotchas**:
+- Environment variables must be prefixed with `VITE_` (not `REACT_APP_`) to be exposed to the browser
+- Vite reads `web/.env` natively; the root `.env` is only for Go targets
+- JSX must be in `.jsx` files (Vite does not transform `.js` files containing JSX)
+- `import.meta.env.MODE` gives `"development"` or `"production"` (replaces `process.env.NODE_ENV`)
+
+### Tailwind CSS (`tailwindcss` ^4.2.2) -- Utility-First CSS Framework
+
+**What it is**: A utility-first CSS framework that provides low-level utility classes for building custom designs directly in markup.
+
+**Our usage**: Tailwind CSS v4, integrated via `@tailwindcss/vite` plugin. Used for all web UI styling -- layout, spacing, typography, colors, responsive design, and dark mode. Theme-aware via CSS custom properties (e.g., `text-fg-heading`, `bg-surface`, `border-line`).
+
+**v4-specific notes**: Tailwind v4 uses a CSS-first configuration model (no `tailwind.config.js`). Configuration lives in the CSS files themselves using `@theme` directives.
+
+### Vitest (`vitest` ^4.1.2) -- Test Runner
+
+**What it is**: A Vite-native test framework, API-compatible with Jest. Uses the same Vite config and transform pipeline, so tests run with the same module resolution as the app.
+
+**Our usage**: 43 tests across `api.js`, all 4 components, `ErrorBoundary`, and `App` routing. Uses `@testing-library/react` for component testing and `jsdom` as the DOM environment. Run with `make test-web` or `bun run test`.
 
 ### ESLint (`eslint` ^8.57.0) + Plugin (`eslint-plugin-react` ^7.33.2) -- Linter
 
 **What it is**: JavaScript/JSX static analysis tool that catches bugs, enforces style, and prevents common mistakes.
 
-**Our config**: Minimal -- extends `react-app` (CRA's default rules) via `eslintConfig` in `package.json`. Run with `make lint-web`.
+**Our config**: Minimal. Run with `make lint-web`.
 
 ---
 
@@ -182,9 +196,9 @@ These are pulled in transitively by Fyne. You don't import them directly, but th
 
 **What it is**: A fast JavaScript runtime, package manager, and bundler. Drop-in replacement for npm/yarn with significantly faster install times.
 
-**Our usage**: `bun install` (via `make install-web`) and `bun start` / `bun test` (via Makefile targets). The `bun.lock` file is gitignored.
+**Our usage**: `bun install` (via `make install-web`) and `bun run dev` / `bun run test` (via Makefile targets). The `bun.lock` file is gitignored.
 
-**Note**: CRA's `react-scripts` still uses webpack under the hood -- bun only replaces npm as the package manager and script runner, not the bundler.
+**Note**: Vite handles all bundling -- bun serves purely as the package manager and script runner.
 
 ### Make (GNU Make)
 

@@ -142,6 +142,47 @@ func LoadFeeds() ([]models.FeedEntry, error) {
 	return loadJSON[models.FeedEntry](sm, "feeds.json")
 }
 
+func UpdateFeed(id int, updated *models.FeedEntry) error {
+	sm, err := getStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	feeds, err := loadJSON[models.FeedEntry](sm, "feeds.json")
+	if err != nil {
+		return fmt.Errorf("refusing to update over unreadable data file: %w", err)
+	}
+	for i, f := range feeds {
+		if f.ID == id {
+			updated.ID = id
+			feeds[i] = *updated
+			return saveJSON(sm, "feeds.json", feeds)
+		}
+	}
+	return fmt.Errorf("feed with ID %d not found", id)
+}
+
+func DeleteFeed(id int) error {
+	sm, err := getStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	feeds, err := loadJSON[models.FeedEntry](sm, "feeds.json")
+	if err != nil {
+		return fmt.Errorf("refusing to delete from unreadable data file: %w", err)
+	}
+	for i, f := range feeds {
+		if f.ID == id {
+			feeds = append(feeds[:i], feeds[i+1:]...)
+			return saveJSON(sm, "feeds.json", feeds)
+		}
+	}
+	return fmt.Errorf("feed with ID %d not found", id)
+}
+
 // --- Sleep ---
 
 func SaveSleep(entry *models.SleepEntry) error {
@@ -170,6 +211,47 @@ func LoadSleep() ([]models.SleepEntry, error) {
 		return nil, fmt.Errorf("failed to initialize storage: %w", err)
 	}
 	return loadJSON[models.SleepEntry](sm, "sleep.json")
+}
+
+func UpdateSleep(id int, updated *models.SleepEntry) error {
+	sm, err := getStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	entries, err := loadJSON[models.SleepEntry](sm, "sleep.json")
+	if err != nil {
+		return fmt.Errorf("refusing to update over unreadable data file: %w", err)
+	}
+	for i, e := range entries {
+		if e.ID == id {
+			updated.ID = id
+			entries[i] = *updated
+			return saveJSON(sm, "sleep.json", entries)
+		}
+	}
+	return fmt.Errorf("sleep entry with ID %d not found", id)
+}
+
+func DeleteSleep(id int) error {
+	sm, err := getStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	entries, err := loadJSON[models.SleepEntry](sm, "sleep.json")
+	if err != nil {
+		return fmt.Errorf("refusing to delete from unreadable data file: %w", err)
+	}
+	for i, e := range entries {
+		if e.ID == id {
+			entries = append(entries[:i], entries[i+1:]...)
+			return saveJSON(sm, "sleep.json", entries)
+		}
+	}
+	return fmt.Errorf("sleep entry with ID %d not found", id)
 }
 
 // --- Growth ---
@@ -202,6 +284,47 @@ func LoadGrowth() ([]models.GrowthEntry, error) {
 	return loadJSON[models.GrowthEntry](sm, "growth.json")
 }
 
+func UpdateGrowth(id int, updated *models.GrowthEntry) error {
+	sm, err := getStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	entries, err := loadJSON[models.GrowthEntry](sm, "growth.json")
+	if err != nil {
+		return fmt.Errorf("refusing to update over unreadable data file: %w", err)
+	}
+	for i, e := range entries {
+		if e.ID == id {
+			updated.ID = id
+			entries[i] = *updated
+			return saveJSON(sm, "growth.json", entries)
+		}
+	}
+	return fmt.Errorf("growth entry with ID %d not found", id)
+}
+
+func DeleteGrowth(id int) error {
+	sm, err := getStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	entries, err := loadJSON[models.GrowthEntry](sm, "growth.json")
+	if err != nil {
+		return fmt.Errorf("refusing to delete from unreadable data file: %w", err)
+	}
+	for i, e := range entries {
+		if e.ID == id {
+			entries = append(entries[:i], entries[i+1:]...)
+			return saveJSON(sm, "growth.json", entries)
+		}
+	}
+	return fmt.Errorf("growth entry with ID %d not found", id)
+}
+
 // --- Diapers ---
 
 func SaveDiaper(entry *models.DiaperEntry) error {
@@ -230,6 +353,47 @@ func LoadDiapers() ([]models.DiaperEntry, error) {
 		return nil, fmt.Errorf("failed to initialize storage: %w", err)
 	}
 	return loadJSON[models.DiaperEntry](sm, "diapers.json")
+}
+
+func UpdateDiaper(id int, updated *models.DiaperEntry) error {
+	sm, err := getStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	entries, err := loadJSON[models.DiaperEntry](sm, "diapers.json")
+	if err != nil {
+		return fmt.Errorf("refusing to update over unreadable data file: %w", err)
+	}
+	for i, e := range entries {
+		if e.ID == id {
+			updated.ID = id
+			entries[i] = *updated
+			return saveJSON(sm, "diapers.json", entries)
+		}
+	}
+	return fmt.Errorf("diaper entry with ID %d not found", id)
+}
+
+func DeleteDiaper(id int) error {
+	sm, err := getStorage()
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	entries, err := loadJSON[models.DiaperEntry](sm, "diapers.json")
+	if err != nil {
+		return fmt.Errorf("refusing to delete from unreadable data file: %w", err)
+	}
+	for i, e := range entries {
+		if e.ID == id {
+			entries = append(entries[:i], entries[i+1:]...)
+			return saveJSON(sm, "diapers.json", entries)
+		}
+	}
+	return fmt.Errorf("diaper entry with ID %d not found", id)
 }
 
 // GetDataDirectory returns the directory where data files are stored.

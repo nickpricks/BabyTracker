@@ -17,7 +17,7 @@ beforeEach(() => {
 
 describe("Growth", () => {
   it("renders the form", () => {
-    getGrowth.mockResolvedValue([]);
+    getGrowth.mockResolvedValue({ items: [], total: 0 });
     render(<Growth />);
     expect(screen.getByRole("heading", { name: /log growth/i })).toBeInTheDocument();
   });
@@ -26,14 +26,15 @@ describe("Growth", () => {
     getGrowth.mockRejectedValue(new Error("fail"));
     render(<Growth />);
     await waitFor(() => {
-      expect(screen.getByText(/could not load growth/i)).toBeInTheDocument();
+      expect(screen.getByText("fail")).toBeInTheDocument();
     });
   });
 
   it("shows recent entries on successful load", async () => {
-    getGrowth.mockResolvedValue([
-      { id: 1, date: "2026-01-01", weight: 4.5, height: 55, head_circ: 36, notes: "" },
-    ]);
+    getGrowth.mockResolvedValue({
+      items: [{ id: 1, date: "2026-01-01", weight: 4.5, height: 55, head_circ: 36, notes: "" }],
+      total: 1,
+    });
     render(<Growth />);
     await waitFor(() => {
       expect(screen.getByText(/4.5 kg/)).toBeInTheDocument();
@@ -42,7 +43,7 @@ describe("Growth", () => {
 
   it("submits growth entry", async () => {
     const user = userEvent.setup();
-    getGrowth.mockResolvedValue([]);
+    getGrowth.mockResolvedValue({ items: [], total: 0 });
     logGrowth.mockResolvedValue({ id: 1 });
 
     render(<Growth />);
@@ -55,7 +56,7 @@ describe("Growth", () => {
 
   it("shows error on submit failure", async () => {
     const user = userEvent.setup();
-    getGrowth.mockResolvedValue([]);
+    getGrowth.mockResolvedValue({ items: [], total: 0 });
     logGrowth.mockRejectedValue(new Error("date required"));
 
     render(<Growth />);

@@ -30,7 +30,7 @@ describe("apiGet", () => {
 
   it("throws on non-ok response", async () => {
     fetch.mockResolvedValueOnce({ ok: false, status: 500 });
-    await expect(getFeeds()).rejects.toThrow("GET /feeds failed: 500");
+    await expect(getFeeds()).rejects.toThrow(/GET \/feeds.*failed: 500/);
   });
 });
 
@@ -68,13 +68,22 @@ describe("apiPost", () => {
 
 describe("auth header", () => {
   it("does not send Authorization when no key set", async () => {
+    const origKey = import.meta.env.VITE_API_KEY;
+    import.meta.env.VITE_API_KEY = "";
+
+    // Re-import api.js to pick up the cleared key
+    vi.resetModules();
+    const { getFeeds: getFeedsNoAuth } = await import("./api.js");
+
     fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve([]),
     });
-    await getFeeds();
+    await getFeedsNoAuth();
     const [, opts] = fetch.mock.calls[0];
     expect(opts.headers.Authorization).toBeUndefined();
+
+    import.meta.env.VITE_API_KEY = origKey;
   });
 });
 

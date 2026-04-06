@@ -17,7 +17,7 @@
 | Informational | 5 |
 | **Total** | **34** |
 
-The 7-agent review (2026-03-27) confirmed all 23 original findings and uncovered **11 additional issues**, bringing the total to 34. As of 2026-03-27, **5 findings have been fixed** and 1 partially fixed: API key authentication added (FINDING-01), storage no longer silently destroys data on corrupt JSON (FINDING-24), file writes are now atomic via temp+rename (FINDING-25), file/directory permissions tightened (FINDING-13, FINDING-09 partial), and API handler tests are now hermetic (FINDING-35). Remaining critical/high items include the race condition in storage (FINDING-12), wildcard CORS (FINDING-03), no request body size limit (FINDING-08), and silent frontend error handling (FINDING-28).
+The 7-agent review (2026-03-27) confirmed all 23 original findings and uncovered **11 additional issues**, bringing the total to 34. As of v0.4, **12 findings have been fully fixed** and 1 partially fixed: API key authentication (FINDING-01), configurable CORS with localhost wildcard (FINDING-03), request body size limit (FINDING-08), storage mutex (FINDING-12), directory/file permissions (FINDING-13), CRA-to-Vite migration (FINDING-17), no silent data destruction (FINDING-24), atomic file writes (FINDING-25), thread-safe lazy init (FINDING-26), fetch error display (FINDING-28), Error Boundary (FINDING-29), hermetic API tests (FINDING-35), and PII file permissions partially addressed (FINDING-09). Remaining critical/high items: desktop errors invisible to users (FINDING-32), no TLS (FINDING-04), PII encryption at rest (FINDING-09), and no authorization (FINDING-02).
 
 ---
 
@@ -43,7 +43,7 @@ The 7-agent review (2026-03-27) confirmed all 23 original findings and uncovered
 ## 2. CORS & Network Security
 
 ### FINDING-03: Wildcard CORS Origin (`Access-Control-Allow-Origin: *`)
-- **Status:** [x] Fixed (2026-03-27) -- configurable `CORS_ORIGIN` env var, defaults to `http://localhost:3000`
+- **Status:** [x] Fixed (2026-03-27, updated v0.4) -- configurable `CORS_ORIGIN` env var (default `http://localhost:3000`); v0.4 rewrote CORS as an external `corsHandler` wrapping the mux router (so OPTIONS preflight is intercepted before mux's method matching), with localhost wildcard matching (any `http://localhost:*` port accepted when configured origin is localhost)
 - **Severity:** High
 - **Agents flagged:** 6/7
 - **Files:** `internal/api/router.go`, `internal/config/config.go`
@@ -230,13 +230,13 @@ The 7-agent review (2026-03-27) confirmed all 23 original findings and uncovered
 
 ### FINDING-19: XSS Defense Relies on React's Default Escaping
 - **Severity:** Low
-- **Files:** `web/src/components/Feeds.js`, `Growth.js`, `Sleep.js`, `SusuPoty.js`
+- **Files:** `web/src/components/Feeds.jsx`, `Growth.jsx`, `Sleep.jsx`, `SusuPoty.jsx`
 - **Description:** React components render API data directly in JSX. React's default behavior escapes strings, so this is **not currently exploitable**. However, the lack of server-side sanitization (FINDING-07) means any future use of unsafe HTML rendering would make XSS trivially exploitable.
 - **Recommended Fix:** Continue using React's default JSX escaping. Consider server-side type validation as defense in depth.
 
 ### FINDING-20: Error Messages from API Displayed to User
 - **Severity:** Informational
-- **Files:** `web/src/components/Feeds.js` (line 178), all components
+- **Files:** `web/src/components/Feeds.jsx`, all components
 - **Description:** API error messages are displayed directly to users. Combined with FINDING-10 (internal errors leaked), this could show internal server details.
 - **Recommended Fix:** Show user-friendly error messages; log detailed errors to the browser console.
 
@@ -262,7 +262,7 @@ The 7-agent review (2026-03-27) confirmed all 23 original findings and uncovered
 ### FINDING-34: Sleep Duration Negative for Overnight Sleep *(NEW)*
 - **Severity:** Low
 - **Agents flagged:** 3/7
-- **Files:** `internal/desktop/tabs/sleep.go` (line 83), `web/src/components/Sleep.js` (line 45)
+- **Files:** `internal/desktop/tabs/sleep.go` (line 83), `web/src/components/Sleep.jsx`
 - **Description:** `endTime.Sub(startTime).Minutes()` produces a negative value when sleep crosses midnight (e.g., 22:00 to 06:00). Both desktop and web are affected. No validation is performed.
 - **Recommended Fix:** Check for negative duration and add 24 hours, or validate and show an error.
 
@@ -368,7 +368,7 @@ The 7-agent review (2026-03-27) confirmed all 23 original findings and uncovered
 | Finding | What was done |
 |---------|---------------|
 | FINDING-01 | Bearer token auth middleware; `API_KEY` env var |
-| FINDING-03 | Configurable `CORS_ORIGIN`, default `http://localhost:3000` |
+| FINDING-03 | Configurable `CORS_ORIGIN`, default `http://localhost:3000`; v0.4: external `corsHandler` wrapping mux, localhost wildcard matching |
 | FINDING-08 | `http.MaxBytesReader` middleware, 1MB limit |
 | FINDING-12 | `sync.Mutex` on `StorageManager` for all `Save*` functions |
 | FINDING-13 | Directory permissions `0700`, file permissions `0600` |
@@ -391,3 +391,4 @@ The 7-agent review (2026-03-27) confirmed all 23 original findings and uncovered
 | 2026-03-27 | 7-agent parallel review: added 11 new findings (FINDING-24 through FINDING-35), upgraded FINDING-08 from Medium to High, added agent consensus counts, reorganized sections |
 | 2026-03-27 | Fixed FINDING-01 (API key auth), FINDING-24 (no silent data destruction), FINDING-25 (atomic writes + 0600 perms), FINDING-13 (dir perms 0700), FINDING-35 (hermetic tests). Partial fix for FINDING-09 (perms only, no encryption). |
 | 2026-03-27 | Fixed FINDING-12 (mutex), FINDING-03 (CORS origin), FINDING-08 (body limit), FINDING-26 (sync.Once), FINDING-28 (fetch error display), FINDING-29 (Error Boundary), FINDING-17 (CRA->Vite migration). Added 41 web tests (vitest). |
+| 2026-04-06 | v0.4 docs sweep: updated executive summary to reflect all 12+1 fixes (was stale at 5+1); updated FINDING-03 fix description with v0.4 CORS rewrite details (external corsHandler, localhost wildcard); corrected .js -> .jsx file references in FINDING-19, FINDING-20, FINDING-34 (Vite migration changed extensions). |

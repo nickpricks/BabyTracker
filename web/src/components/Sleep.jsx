@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getSleep, logSleep } from "../api";
+import { useLoadMore } from "../useLoadMore";
 
 const SLEEP_TYPES = ["Nap", "Night"];
 const QUALITY_OPTIONS = ["Good", "Fair", "Poor"];
@@ -17,23 +18,13 @@ export default function Sleep() {
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
-  const [recentSleep, setRecentSleep] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState("");
 
-  const fetchSleep = async () => {
-    try {
-      setFetchError("");
-      const entries = await getSleep();
-      setRecentSleep(entries.slice(-10).reverse());
-    } catch {
-      setFetchError("Could not load sleep entries. Is the API server running?");
-    }
-  };
+  const { items: recentSleep, loading: listLoading, error: fetchError, loadMore, hasMore, refresh, sentinelRef } = useLoadMore(getSleep);
 
   useEffect(() => {
-    fetchSleep();
-  }, []);
+    refresh();
+  }, [refresh]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,8 +34,8 @@ export default function Sleep() {
     try {
       await logSleep({
         date,
-        start_time: `${date}T${startTime}:00Z`,
-        end_time: endTime ? `${date}T${endTime}:00Z` : undefined,
+        start_time: `${date}T${startTime}:00`,
+        end_time: endTime ? `${date}T${endTime}:00` : undefined,
         type: sleepType,
         quality,
         notes,
@@ -56,7 +47,7 @@ export default function Sleep() {
       setSleepType("");
       setQuality("");
       setNotes("");
-      fetchSleep();
+      refresh();
       setTimeout(() => setFeedback(""), 3000);
     } catch (err) {
       setError(err.message);
@@ -176,23 +167,26 @@ export default function Sleep() {
         ) : recentSleep.length === 0 ? (
           <p className="text-sm text-fg-muted">No sleep entries logged yet.</p>
         ) : (
-          <ul className="space-y-2">
-            {recentSleep.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
-              >
-                <span className="text-sm font-semibold text-fg">{entry.type}</span>
-                <span className="text-xs text-fg-muted">{entry.date}</span>
-                {entry.quality && (
-                  <span className="text-xs text-mod-sleep font-medium">{entry.quality}</span>
-                )}
-                {entry.notes && (
-                  <span className="text-xs text-fg-subtle truncate">{entry.notes}</span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-2">
+              {recentSleep.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
+                >
+                  <span className="text-sm font-semibold text-fg">{entry.type}</span>
+                  <span className="text-xs text-fg-muted">{entry.date}</span>
+                  {entry.quality && (
+                    <span className="text-xs text-mod-sleep font-medium">{entry.quality}</span>
+                  )}
+                  {entry.notes && (
+                    <span className="text-xs text-fg-subtle truncate">{entry.notes}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {hasMore && <div ref={sentinelRef} className="py-2 text-center text-xs text-fg-muted">{listLoading ? "Loading..." : ""}</div>}
+          </>
         )}
       </div>
     </div>

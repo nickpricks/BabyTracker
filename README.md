@@ -243,21 +243,9 @@ For app store distribution, [Capacitor](https://capacitorjs.com/) can wrap the b
 
 ## 🔮 Roadmap
 
-| Version | Status | Features |
-|---------|--------|----------|
-| `v0.1` | ✅ Done | Initial Fyne window with basic UI |
-| `v0.2` | ✅ Done | Modular architecture, Feed Tracker with persistence |
-| `v0.3` | ✅ Done | All 4 modules, standard Go layout, API, React SPA, PWA, tests |
-| `v0.3.1` | ✅ Done | Security hardening: API auth, CORS lockdown, storage mutex, file permissions ([details](docs/Security-Review.md)) |
-| `v0.3.2` | 🔜 Next | Test coverage push: API get-by-ID handlers, storage init paths, web edge cases |
-| `v0.3.2.5` | 🚨 Critical | Desktop recent activity: load and display entries in all 4 tabs (currently placeholder) |
-| `v0.3.2.5.5` | 🚨 Critical | API time parsing: accept timezone-less timestamps (custom unmarshaler), remove `Z` workaround from web |
-| `v0.4` | 🔜 Next | Tailwind redesign, dashboard, theme system, bench tooling |
-| `v0.4.5` | 🔜 Planned | Desktop test coverage: `fyne.test` headless tests, extract UI logic into testable functions |
-| `v0.5` | 🔜 Planned | History views with charts, pattern analytics |
-| `v0.6` | 🔜 Planned | Reminders, notifications |
-| `v1.0` | ⏳ Future | Multi-profile support, exportable reports |
-| `v2.0+` | 🚀 Vision | Adult Mode: rebranded as Body Soul and Mind Tracker |
+See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full roadmap, tech debt tracker, and architectural evolution path.
+
+**Current:** v0.4 (Tailwind redesign, dashboard, themes) | **Next:** v0.3.2 (bug fixes) → v0.4.1 (multi-child) → v0.5 (life journal) → v0.8 (adult mode)
 
 ---
 

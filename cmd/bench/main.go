@@ -111,7 +111,7 @@ func genFeeds(r *rand.Rand, start time.Time) []models.FeedEntry {
 		entries[i] = models.FeedEntry{
 			ID:       i + 1,
 			Date:     t.Format("2006-01-02"),
-			Time:     t,
+			Time:     models.FlexTime{Time: t},
 			Type:     ft,
 			Quantity: qty,
 			Notes:    feedNotes[r.Intn(len(feedNotes))],
@@ -138,8 +138,8 @@ func genSleep(r *rand.Rand, start time.Time) []models.SleepEntry {
 		entries[i] = models.SleepEntry{
 			ID:        i + 1,
 			Date:      t.Format("2006-01-02"),
-			StartTime: t,
-			EndTime:   t.Add(time.Duration(dur) * time.Minute),
+			StartTime: models.FlexTime{Time: t},
+			EndTime:   models.FlexTime{Time: t.Add(time.Duration(dur) * time.Minute)},
 			Duration:  dur,
 			Type:      st,
 			Quality:   qualities[r.Intn(len(qualities))],
@@ -183,7 +183,7 @@ func genDiapers(r *rand.Rand, start time.Time) []models.DiaperEntry {
 		entries[i] = models.DiaperEntry{
 			ID:    i + 1,
 			Date:  t.Format("2006-01-02"),
-			Time:  t,
+			Time:  models.FlexTime{Time: t},
 			Type:  diaperTypes[r.Intn(len(diaperTypes))],
 			Notes: diaperNotes[r.Intn(len(diaperNotes))],
 		}

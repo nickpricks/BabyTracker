@@ -14,6 +14,7 @@
 | [man.md](man.md) | Function & file reference -- every file, every function, one-liner to one-paragraph descriptions |
 | [man-ext.md](man-ext.md) | Third-party dependency guide -- what each dep does, why we use it, and the Fyne pain |
 | [make.md](make.md) | Makefile reference -- every `make` target with usage, examples, and gotchas |
+| [ROADMAP.md](ROADMAP.md) | Full roadmap, tech debt, and architectural evolution path |
 | [Security-Review.md](Security-Review.md) | Security & vulnerability audit -- 23 findings with severity ratings and fix recommendations |
 
 ---
@@ -26,6 +27,7 @@
 - **Build failing on Fyne?** See the Fyne section in [man-ext.md](man-ext.md)
 - **Working with Claude Code?** See [CLAUDE.md](CLAUDE.md)
 - **Security concerns?** See [Security-Review.md](Security-Review.md)
+- **Where is this project headed?** See [ROADMAP.md](ROADMAP.md)
 - **Want the full picture?** Read [Manual.md](Manual.md) end to end
 
 ---

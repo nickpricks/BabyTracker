@@ -83,7 +83,7 @@ func CreateFeedsTab() *fyne.Container {
 
 		feed := models.FeedEntry{
 			Date:     dateStr,
-			Time:     feedTime,
+			Time:     models.FlexTime{Time: feedTime},
 			Type:     feedTypeSelect.Selected,
 			Quantity: quantity,
 			Notes:    notes,
@@ -122,13 +122,39 @@ func CreateFeedsTab() *fyne.Container {
 
 	recentFeedsLabel := widget.NewLabel("Recent Feeds")
 	recentFeedsLabel.TextStyle.Bold = true
-	recentFeedsPlaceholder := widget.NewLabel("Recent feeding history will appear here")
+	recentList := widget.NewLabel("Loading...")
+
+	refreshRecent := func() {
+		feeds, err := storage.LoadFeeds()
+		if err != nil || len(feeds) == 0 {
+			recentList.SetText("No feeds logged yet")
+			return
+		}
+		lines := ""
+		for i := len(feeds) - 1; i >= 0; i-- {
+			f := feeds[i]
+			lines += fmt.Sprintf("%s %s — %s", f.Date, f.Time.Format("15:04"), f.Type)
+			if f.Quantity > 0 {
+				lines += fmt.Sprintf(" (%.0fml)", f.Quantity)
+			}
+			lines += "\n"
+		}
+		recentList.SetText(lines)
+	}
+	refreshRecent()
+
+	// Wrap original log button to refresh after save
+	origOnTapped := logButton.OnTapped
+	logButton.OnTapped = func() {
+		origOnTapped()
+		refreshRecent()
+	}
 
 	return container.NewVBox(
 		widget.NewCard("Log New Feed", "Track feeding times, amounts, and notes",
 			container.NewVBox(feedForm, quickActions, logButton)),
 		widget.NewSeparator(),
 		widget.NewCard("Recent Activity", "Your recent feeding logs",
-			container.NewVBox(recentFeedsLabel, recentFeedsPlaceholder)),
+			container.NewVBox(recentFeedsLabel, recentList)),
 	)
 }

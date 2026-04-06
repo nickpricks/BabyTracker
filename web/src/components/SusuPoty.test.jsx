@@ -17,7 +17,7 @@ beforeEach(() => {
 
 describe("SusuPoty", () => {
   it("renders the form", () => {
-    getDiapers.mockResolvedValue([]);
+    getDiapers.mockResolvedValue({ items: [], total: 0 });
     render(<SusuPoty />);
     expect(screen.getByText("The Susu-Poty Chronicles")).toBeInTheDocument();
   });
@@ -26,14 +26,15 @@ describe("SusuPoty", () => {
     getDiapers.mockRejectedValue(new Error("fail"));
     render(<SusuPoty />);
     await waitFor(() => {
-      expect(screen.getByText(/could not load diaper/i)).toBeInTheDocument();
+      expect(screen.getByText("fail")).toBeInTheDocument();
     });
   });
 
   it("shows recent entries on successful load", async () => {
-    getDiapers.mockResolvedValue([
-      { id: 1, type: "Wet", date: "2026-01-01", notes: "" },
-    ]);
+    getDiapers.mockResolvedValue({
+      items: [{ id: 1, type: "Wet", date: "2026-01-01", notes: "" }],
+      total: 1,
+    });
     render(<SusuPoty />);
     await waitFor(() => {
       expect(screen.getByText("2026-01-01", { exact: false })).toBeInTheDocument();
@@ -42,7 +43,7 @@ describe("SusuPoty", () => {
 
   it("submits diaper entry", async () => {
     const user = userEvent.setup();
-    getDiapers.mockResolvedValue([]);
+    getDiapers.mockResolvedValue({ items: [], total: 0 });
     logDiaper.mockResolvedValue({ id: 1 });
 
     render(<SusuPoty />);
@@ -58,7 +59,7 @@ describe("SusuPoty", () => {
 
   it("quick wet sets type", async () => {
     const user = userEvent.setup();
-    getDiapers.mockResolvedValue([]);
+    getDiapers.mockResolvedValue({ items: [], total: 0 });
     render(<SusuPoty />);
 
     await user.click(screen.getByRole("button", { name: /quick wet/i }));
@@ -67,7 +68,7 @@ describe("SusuPoty", () => {
 
   it("shows error on submit failure", async () => {
     const user = userEvent.setup();
-    getDiapers.mockResolvedValue([]);
+    getDiapers.mockResolvedValue({ items: [], total: 0 });
     logDiaper.mockRejectedValue(new Error("type required"));
 
     render(<SusuPoty />);

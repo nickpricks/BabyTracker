@@ -82,13 +82,55 @@ func CreateGrowthTab() *fyne.Container {
 
 	recentLabel := widget.NewLabel("Recent Measurements")
 	recentLabel.TextStyle.Bold = true
-	recentPlaceholder := widget.NewLabel("Recent growth measurements will appear here")
+	recentList := widget.NewLabel("Loading...")
+
+	refreshRecent := func() {
+		entries, err := storage.LoadGrowth()
+		if err != nil || len(entries) == 0 {
+			recentList.SetText("No growth entries logged yet")
+			return
+		}
+		lines := ""
+		for i := len(entries) - 1; i >= 0; i-- {
+			e := entries[i]
+			parts := []string{e.Date + " —"}
+			if e.Weight > 0 {
+				parts = append(parts, fmt.Sprintf("%.1fkg", e.Weight))
+			}
+			if e.Height > 0 {
+				parts = append(parts, fmt.Sprintf("%.1fcm", e.Height))
+			}
+			if e.HeadCircumference > 0 {
+				parts = append(parts, fmt.Sprintf("HC %.1fcm", e.HeadCircumference))
+			}
+			lines += fmt.Sprintf("%s\n", joinParts(parts))
+		}
+		recentList.SetText(lines)
+	}
+	refreshRecent()
+
+	origOnTapped := logButton.OnTapped
+	logButton.OnTapped = func() {
+		origOnTapped()
+		refreshRecent()
+	}
 
 	return container.NewVBox(
 		widget.NewCard("Log Growth", "Track weight, height, and head circumference",
 			container.NewVBox(growthForm, logButton)),
 		widget.NewSeparator(),
 		widget.NewCard("Recent Activity", "Your recent growth logs",
-			container.NewVBox(recentLabel, recentPlaceholder)),
+			container.NewVBox(recentLabel, recentList)),
 	)
+}
+
+func joinParts(parts []string) string {
+	result := ""
+	for i, p := range parts {
+		if i > 0 {
+			result += " "
+		}
+		result += p
+	}
+	return result
 }

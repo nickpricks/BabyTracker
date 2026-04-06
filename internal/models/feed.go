@@ -3,21 +3,17 @@
 // for storage, retrieval, and manipulation of baby tracking information.
 package models
 
-import (
-	"time"
-)
-
 // FeedEntry represents a single feeding session record
 // This structure captures all relevant information about a baby's feeding,
 // including timing, quantity, type, and contextual notes for comprehensive tracking.
 type FeedEntry struct {
-	ID       int       `json:"id"`       // Unique identifier for database storage
-	Date     string    `json:"date"`     // Date of the feeding (YYYY-MM-DD)
-	Time     time.Time `json:"time"`     // When the feeding occurred
-	Type     string    `json:"type"`     // Type of feed (bottle, breast, solid)
-	Quantity float64   `json:"quantity"` // Amount consumed (ml/oz), 0 if not applicable
-	Notes    string    `json:"notes"`    // Additional observations or comments
-	Duration int       `json:"duration"` // Feeding duration in minutes (for breastfeeding)
+	ID       int      `json:"id"`       // Unique identifier for database storage
+	Date     string   `json:"date"`     // Date of the feeding (YYYY-MM-DD)
+	Time     FlexTime `json:"time"`     // When the feeding occurred
+	Type     string   `json:"type"`     // Type of feed (bottle, breast, solid)
+	Quantity float64  `json:"quantity"` // Amount consumed (ml/oz), 0 if not applicable
+	Notes    string   `json:"notes"`    // Additional observations or comments
+	Duration int      `json:"duration"` // Feeding duration in minutes (for breastfeeding)
 }
 
 // FeedType constants for consistent feed categorization

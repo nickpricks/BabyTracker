@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getGrowth, logGrowth } from "../api";
+import { useLoadMore } from "../useLoadMore";
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
@@ -11,23 +12,13 @@ export default function Growth() {
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
-  const [recentGrowth, setRecentGrowth] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState("");
 
-  const fetchGrowth = async () => {
-    try {
-      setFetchError("");
-      const entries = await getGrowth();
-      setRecentGrowth(entries.slice(-10).reverse());
-    } catch {
-      setFetchError("Could not load growth entries. Is the API server running?");
-    }
-  };
+  const { items: recentGrowth, loading: listLoading, error: fetchError, loadMore, hasMore, refresh, sentinelRef } = useLoadMore(getGrowth);
 
   useEffect(() => {
-    fetchGrowth();
-  }, []);
+    refresh();
+  }, [refresh]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,7 +39,7 @@ export default function Growth() {
       setHeight("");
       setHeadCirc("");
       setNotes("");
-      fetchGrowth();
+      refresh();
       setTimeout(() => setFeedback(""), 3000);
     } catch (err) {
       setError(err.message);
@@ -156,28 +147,31 @@ export default function Growth() {
         ) : recentGrowth.length === 0 ? (
           <p className="text-sm text-fg-muted">No growth entries logged yet.</p>
         ) : (
-          <ul className="space-y-2">
-            {recentGrowth.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
-              >
-                <span className="text-sm font-semibold text-fg">{entry.date}</span>
-                {entry.weight > 0 && (
-                  <span className="text-xs text-mod-growth font-medium">{entry.weight} kg</span>
-                )}
-                {entry.height > 0 && (
-                  <span className="text-xs text-fg-muted">{entry.height} cm</span>
-                )}
-                {entry.head_circ > 0 && (
-                  <span className="text-xs text-fg-subtle">Head: {entry.head_circ} cm</span>
-                )}
-                {entry.notes && (
-                  <span className="text-xs text-fg-subtle truncate">{entry.notes}</span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-2">
+              {recentGrowth.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
+                >
+                  <span className="text-sm font-semibold text-fg">{entry.date}</span>
+                  {entry.weight > 0 && (
+                    <span className="text-xs text-mod-growth font-medium">{entry.weight} kg</span>
+                  )}
+                  {entry.height > 0 && (
+                    <span className="text-xs text-fg-muted">{entry.height} cm</span>
+                  )}
+                  {entry.head_circ > 0 && (
+                    <span className="text-xs text-fg-subtle">Head: {entry.head_circ} cm</span>
+                  )}
+                  {entry.notes && (
+                    <span className="text-xs text-fg-subtle truncate">{entry.notes}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {hasMore && <div ref={sentinelRef} className="py-2 text-center text-xs text-fg-muted">{listLoading ? "Loading..." : ""}</div>}
+          </>
         )}
       </div>
     </div>

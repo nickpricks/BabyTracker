@@ -59,6 +59,7 @@ The `internal/` directory is the **nucleus** of the entire system. It contains z
 | `internal/config` | Environment-based configuration with sensible defaults | Both entry points |
 | `internal/api` | HTTP route registration, CORS middleware, request/response handlers | API server only |
 | `internal/desktop` | Fyne window management, tabbed layout, form construction | Desktop only |
+| `cmd/bench` | HTTP load-testing / benchmarking tool for the API | Standalone CLI |
 
 ### 2.3 Data Flow Patterns
 
@@ -95,7 +96,7 @@ The REST API is a **resource-oriented** HTTP service built on gorilla/mux:
 | `/api/{resource}` | GET, POST | List all / Create new |
 | `/api/{resource}/{id}` | GET | Retrieve by ID |
 
-**CORS Strategy**: A global middleware intercepts all requests, sets permissive headers (`Access-Control-Allow-Origin: *`), and short-circuits OPTIONS preflight requests. This allows the React dev server on `:3000` to talk to the API on `:8080` without proxy configuration.
+**CORS Strategy**: An external CORS handler wraps the gorilla/mux router, setting `Access-Control-Allow-Origin` to the configured `CORS_ORIGIN` (default: `http://localhost:3000`) and handling OPTIONS preflight requests. This allows the React dev server on `:3000` to talk to the API on `:8080` without proxy configuration.
 
 **Handler Architecture**: Every handler follows the same disciplined pattern:
 1. Decode request body (POST) or extract path params (GET by ID)
@@ -115,14 +116,16 @@ The Fyne desktop app is structured as a **tabbed interface** with one tab per tr
 
 ### 2.7 The Web Application
 
-A **Vite** React project with client-side routing via `react-router-dom`:
+A **Vite** React project styled with **Tailwind CSS v4**, with client-side routing via `react-router-dom`:
 
 - `App.jsx` wraps the router
 - `Main.jsx` provides the navigation layout (header + nav links)
 - `Routes.jsx` maps URL paths to components
+- `Dashboard.jsx` provides an at-a-glance overview of recent activity across all modules
 - `api.js` is the HTTP client layer (generic `apiGet`/`apiPost` wrappers)
 - `config.js` centralizes the API base URL (configurable via `VITE_API_BASE`)
 - Each component (Feeds, Sleep, Growth, SusuPoty) is a complete form with state management, submission, validation feedback, and a "recent entries" display
+- **Theme system**: 3 themes -- Lullaby (default), Nursery_OS, and Midnight Feed -- switchable at runtime
 
 **PWA Features**:
 - `manifest.json` for standalone display mode and home screen installation
@@ -226,7 +229,9 @@ The Makefile provides a **comprehensive build pipeline**:
 | Target | Tool |
 |--------|------|
 | `make test` | `go test ./internal/...` |
+| `make test-web` | vitest (43 tests) |
 | `make test-cover` | Go coverage report |
+| `make test-all` | All tests (Go + coverage + web) |
 | `make lint` | `go vet ./...` |
 | `make lint-web` | eslint |
 
@@ -254,26 +259,7 @@ The Makefile provides a **comprehensive build pipeline**:
 
 ## 7. Roadmap
 
-| Version | Milestone | Key Deliverables |
-|---------|-----------|-----------------|
-| v0.1 | Foundation | Fyne window, basic UI scaffold |
-| v0.2 | Feed Tracking | FeedEntry model, JSON persistence, desktop form |
-| v0.3 | Full Platform | All 4 modules, standard Go layout, REST API, React SPA, PWA |
-| **v0.3.1** | **Security Hardening** | Address findings from [Security-Review.md](Security-Review.md): API authentication (FINDING-01), CORS origin lockdown (FINDING-03), `sync.Mutex` on storage (FINDING-12), `0600` file permissions (FINDING-09/13), request body size limits (FINDING-08), localhost-only bind (FINDING-06) |
-| **v0.4** | **Analytics** | History views with charts, pattern recognition, feeding/sleep trend analysis, percentile growth charts |
-| **v0.5** | **Smart Alerts** | Configurable reminders, feeding interval notifications, sleep schedule suggestions, growth milestone alerts |
-| **v0.6** | **Data Intelligence** | Export to CSV/PDF, pediatrician-ready reports, data visualization dashboard, weekly/monthly summaries |
-| **v1.0** | **Multi-Profile** | Support for multiple children, caregiver accounts, shared access, role-based permissions, dark mode |
-| **v1.5** | **Cloud Sync** | Optional cloud backend, real-time sync across devices, conflict resolution, backup/restore |
-| **v2.0** | **Platform Expansion** | Native mobile apps via Capacitor, Apple Watch complications, Android widgets, Alexa/Google voice integration |
-| **v3.0** | **Adult Mode** | Rebranded as "Body Soul and Mind Tracker" -- generalized health tracking for all ages, plugin architecture, community marketplace |
-
-### Architectural Evolution Path
-
-**Current (v0.3)**: Monolithic JSON storage, single-user, local-first
-**Near-term (v0.4-v0.6)**: SQLite migration, indexing, query engine
-**Mid-term (v1.0-v1.5)**: PostgreSQL option, JWT auth, WebSocket real-time sync
-**Long-term (v2.0+)**: Microservices decomposition, event sourcing, CQRS pattern, plugin SDK
+See **[ROADMAP.md](ROADMAP.md)** for the full roadmap, tech debt tracker, and architectural evolution path.
 
 ---
 
@@ -298,12 +284,4 @@ The Makefile provides a **comprehensive build pipeline**:
 
 ## 10. Known Limitations & Technical Debt
 
-1. No DELETE or PUT endpoints -- entries cannot be edited or removed via API
-2. `layout.go` duplicates tab creation logic already in `app.go`
-3. Web components have no shared form abstraction (each is ~200 lines of similar code)
-4. No database migration path -- switching from JSON requires manual data conversion
-5. Service worker caches the shell but not API responses (no offline data access)
-6. Placeholder PWA icons -- need proper branding assets
-7. No CI/CD pipeline configured
-8. Go API has no request rate limiting
-9. Desktop "Recent Activity" sections are static placeholders -- tabs save data but never call `LoadFeeds()`/`LoadSleep()` etc. to display it
+See [ROADMAP.md](ROADMAP.md) for known limitations and technical debt.

@@ -1,17 +1,15 @@
 package models
 
-import "time"
-
 // SleepEntry represents a single sleep session record.
 type SleepEntry struct {
-	ID        int       `json:"id"`
-	Date      string    `json:"date"`       // YYYY-MM-DD
-	StartTime time.Time `json:"start_time"` // When sleep began
-	EndTime   time.Time `json:"end_time"`   // When sleep ended
-	Duration  int       `json:"duration"`   // Duration in minutes
-	Type      string    `json:"type"`       // nap, night
-	Quality   string    `json:"quality"`    // good, fair, poor
-	Notes     string    `json:"notes"`
+	ID        int      `json:"id"`
+	Date      string   `json:"date"`       // YYYY-MM-DD
+	StartTime FlexTime `json:"start_time"` // When sleep began
+	EndTime   FlexTime `json:"end_time"`   // When sleep ended
+	Duration  int      `json:"duration"`   // Duration in minutes
+	Type      string   `json:"type"`       // nap, night
+	Quality   string   `json:"quality"`    // good, fair, poor
+	Notes     string   `json:"notes"`
 }
 
 // Sleep type constants

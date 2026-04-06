@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getDiapers, logDiaper } from "../api";
+import { useLoadMore } from "../useLoadMore";
 
 const DIAPER_TYPES = ["Wet", "Dirty", "Mixed"];
 
@@ -14,23 +15,13 @@ export default function SusuPoty() {
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
-  const [recentDiapers, setRecentDiapers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState("");
 
-  const fetchDiapers = async () => {
-    try {
-      setFetchError("");
-      const entries = await getDiapers();
-      setRecentDiapers(entries.slice(-10).reverse());
-    } catch {
-      setFetchError("Could not load diaper entries. Is the API server running?");
-    }
-  };
+  const { items: recentDiapers, loading: listLoading, error: fetchError, loadMore, hasMore, refresh, sentinelRef } = useLoadMore(getDiapers);
 
   useEffect(() => {
-    fetchDiapers();
-  }, []);
+    refresh();
+  }, [refresh]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,7 +31,7 @@ export default function SusuPoty() {
     try {
       await logDiaper({
         date,
-        time: `${date}T${time}Z`,
+        time: `${date}T${time}`,
         type: diaperType,
         notes,
       });
@@ -49,7 +40,7 @@ export default function SusuPoty() {
       setTime(getNow());
       setDiaperType("");
       setNotes("");
-      fetchDiapers();
+      refresh();
       setTimeout(() => setFeedback(""), 3000);
     } catch (err) {
       setError(err.message);
@@ -164,20 +155,23 @@ export default function SusuPoty() {
         ) : recentDiapers.length === 0 ? (
           <p className="text-sm text-fg-muted">No diaper changes logged yet.</p>
         ) : (
-          <ul className="space-y-2">
-            {recentDiapers.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
-              >
-                <span className="text-sm font-semibold text-fg">{entry.type}</span>
-                <span className="text-xs text-fg-muted">{entry.date}</span>
-                {entry.notes && (
-                  <span className="text-xs text-fg-subtle truncate">{entry.notes}</span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-2">
+              {recentDiapers.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex items-baseline gap-2 py-2 border-b border-line-subtle last:border-0"
+                >
+                  <span className="text-sm font-semibold text-fg">{entry.type}</span>
+                  <span className="text-xs text-fg-muted">{entry.date}</span>
+                  {entry.notes && (
+                    <span className="text-xs text-fg-subtle truncate">{entry.notes}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {hasMore && <div ref={sentinelRef} className="py-2 text-center text-xs text-fg-muted">{listLoading ? "Loading..." : ""}</div>}
+          </>
         )}
       </div>
     </div>

@@ -43,7 +43,7 @@ Data flow: Desktop writes JSON directly; Web/PWA -> API server -> JSON files.
 
 ## Code Conventions
 
-- Go module: `babytracker` (Go 1.24, Fyne v2, gorilla/mux)
+- Go module: `babytracker` (Go 1.26.0, Fyne v2.7.3, gorilla/mux v1.8.1)
 - Web: React 18, Vite, bun for package management
 - Storage: JSON files in `~/.babytracker/` (feeds.json, sleep.json, growth.json, diapers.json)
 - ID generation: `max(existing IDs) + 1` -- not `len + 1`

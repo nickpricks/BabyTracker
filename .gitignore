@@ -27,6 +27,9 @@ web/.env
 /web/build/
 /web/node_modules/
 
+# Session resume (local handoff notes)
+RESUME.md
+
 # Lock files
 /web/bun.lock
 /web/package-lock.json

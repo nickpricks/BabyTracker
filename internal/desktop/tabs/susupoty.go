@@ -65,7 +65,7 @@ func CreateSusuPotyTab() *fyne.Container {
 
 		entry := models.DiaperEntry{
 			Date:  dateStr,
-			Time:  changeTime,
+			Time:  models.FlexTime{Time: changeTime},
 			Type:  diaperTypeSelect.Selected,
 			Notes: notes,
 		}
@@ -99,13 +99,34 @@ func CreateSusuPotyTab() *fyne.Container {
 
 	recentLabel := widget.NewLabel("Recent Changes")
 	recentLabel.TextStyle.Bold = true
-	recentPlaceholder := widget.NewLabel("Recent diaper changes will appear here")
+	recentList := widget.NewLabel("Loading...")
+
+	refreshRecent := func() {
+		entries, err := storage.LoadDiapers()
+		if err != nil || len(entries) == 0 {
+			recentList.SetText("No diaper changes logged yet")
+			return
+		}
+		lines := ""
+		for i := len(entries) - 1; i >= 0; i-- {
+			e := entries[i]
+			lines += fmt.Sprintf("%s %s — %s\n", e.Date, e.Time.Format("15:04"), e.Type)
+		}
+		recentList.SetText(lines)
+	}
+	refreshRecent()
+
+	origOnTapped := logButton.OnTapped
+	logButton.OnTapped = func() {
+		origOnTapped()
+		refreshRecent()
+	}
 
 	return container.NewVBox(
 		widget.NewCard("The Susu-Poty Chronicles", "Log diaper changes",
 			container.NewVBox(diaperForm, quickActions, logButton)),
 		widget.NewSeparator(),
 		widget.NewCard("Recent Activity", "Your recent diaper logs",
-			container.NewVBox(recentLabel, recentPlaceholder)),
+			container.NewVBox(recentLabel, recentList)),
 	)
 }

@@ -89,8 +89,8 @@ func CreateSleepTab() *fyne.Container {
 
 		entry := models.SleepEntry{
 			Date:      dateStr,
-			StartTime: startTime,
-			EndTime:   endTime,
+			StartTime: models.FlexTime{Time: startTime},
+			EndTime:   models.FlexTime{Time: endTime},
 			Duration:  duration,
 			Type:      sleepTypeSelect.Selected,
 			Quality:   qualitySelect.Selected,
@@ -128,13 +128,41 @@ func CreateSleepTab() *fyne.Container {
 
 	recentLabel := widget.NewLabel("Recent Sleep")
 	recentLabel.TextStyle.Bold = true
-	recentPlaceholder := widget.NewLabel("Recent sleep history will appear here")
+	recentList := widget.NewLabel("Loading...")
+
+	refreshRecent := func() {
+		entries, err := storage.LoadSleep()
+		if err != nil || len(entries) == 0 {
+			recentList.SetText("No sleep entries logged yet")
+			return
+		}
+		lines := ""
+		for i := len(entries) - 1; i >= 0; i-- {
+			e := entries[i]
+			line := fmt.Sprintf("%s %s — %s", e.Date, e.StartTime.Format("15:04"), e.Type)
+			if e.Duration > 0 {
+				line += fmt.Sprintf(" (%dmin)", e.Duration)
+			}
+			if e.Quality != "" {
+				line += fmt.Sprintf(" [%s]", e.Quality)
+			}
+			lines += line + "\n"
+		}
+		recentList.SetText(lines)
+	}
+	refreshRecent()
+
+	origOnTapped := logButton.OnTapped
+	logButton.OnTapped = func() {
+		origOnTapped()
+		refreshRecent()
+	}
 
 	return container.NewVBox(
 		widget.NewCard("Log Sleep", "Track naps and night sleep",
 			container.NewVBox(sleepForm, quickActions, logButton)),
 		widget.NewSeparator(),
 		widget.NewCard("Recent Activity", "Your recent sleep logs",
-			container.NewVBox(recentLabel, recentPlaceholder)),
+			container.NewVBox(recentLabel, recentList)),
 	)
 }
